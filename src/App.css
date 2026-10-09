@@ -59,8 +59,6 @@
 
 /* Responsive Visibility Helpers */
 .show-mobile { display: none !important; }
-.hide-mobile { display: flex; }
-div.hide-mobile, section.hide-mobile { display: block; }
 .badge-text-mobile { display: none; }
 .badge-text-full { display: inline; }
 
@@ -117,11 +115,23 @@ div.hide-mobile, section.hide-mobile { display: block; }
   gap: 1.5rem;
 }
 
+/* Global Logo Blending - Eliminates black bounding box completely */
+img.brand-logo-img,
+img.showcase-logo-img,
+img.mobile-brand-logo-img,
+img.drawer-brand-logo,
+img.footer-logo-img,
+img.pwa-icon-thumb {
+  mix-blend-mode: screen;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+}
+
 .brand-logo-img {
   height: 48px;
   width: auto;
   object-fit: contain;
-  filter: drop-shadow(0 2px 8px rgba(0, 119, 255, 0.4));
   transition: transform 0.2s ease;
 }
 .brand-logo-img:hover {
@@ -276,31 +286,31 @@ div.hide-mobile, section.hide-mobile { display: block; }
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 2.5rem;
+  grid-template-columns: 1.25fr 0.95fr;
+  gap: 3.5rem;
   align-items: center;
 }
 
 .hero-title {
-  font-size: 2.5rem;
+  font-size: 2.65rem;
   font-weight: 800;
-  line-height: 1.15;
-  margin: 0.8rem 0;
+  line-height: 1.2;
+  margin: 1rem 0;
   color: #ffffff;
 }
 
 .hero-description {
   color: var(--text-muted);
-  font-size: 1rem;
-  line-height: 1.6;
-  max-width: 580px;
-  margin-bottom: 1.5rem;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  max-width: 620px;
+  margin-bottom: 1.75rem;
 }
 
 .hero-features-row {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
 }
 
 .feature-item {
@@ -347,12 +357,14 @@ div.hide-mobile, section.hide-mobile { display: block; }
 .showcase-logo-watermark {
   display: flex;
   justify-content: center;
-  margin: 1rem 0;
+  align-items: center;
+  margin: 1.25rem 0 1.5rem;
 }
 .showcase-logo-img {
-  max-height: 90px;
+  max-height: 85px;
+  max-width: 240px;
   object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0, 119, 255, 0.5));
+  mix-blend-mode: screen;
 }
 
 .showcase-stats-grid {

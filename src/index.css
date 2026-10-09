@@ -108,9 +108,10 @@ h1, h2, h3, h4, .brand-font {
 /* Container */
 .container {
   width: 100%;
-  max-width: 1320px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 2rem;
+  box-sizing: border-box;
 }
 
 /* Button Utilities */
