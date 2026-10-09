@@ -14,6 +14,8 @@ import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
 import { PartnerApplicationModal } from './components/PartnerApplicationModal';
 import { PartnerPortal } from './components/partner/PartnerPortal';
+import { PwaInstallBanner } from './components/mobile/PwaInstallBanner';
+import { MobileBottomBar } from './components/mobile/MobileBottomBar';
 import './App.css';
 
 export function App() {
@@ -242,6 +244,21 @@ export function App() {
     );
   };
 
+  const handleFocusSearch = () => {
+    const input = document.querySelector('.search-input');
+    if (input) {
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      input.focus();
+    }
+  };
+
+  const handleScrollToCategories = () => {
+    const el = document.querySelector('.category-filter-wrapper');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   // View: Partner Portal (Dedicated supplier view)
   if (viewMode === 'admin' && currentUser?.role === 'partner') {
     return (
@@ -286,6 +303,9 @@ export function App() {
 
   return (
     <div className="store-app-wrapper">
+      {/* PWA Install Mobile Prompt */}
+      <PwaInstallBanner />
+
       {/* Store Navigation Bar */}
       <Navbar
         searchTerm={searchTerm}
@@ -429,6 +449,15 @@ export function App() {
         onOpenAdmin={handleOpenAdminPortal}
         onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         currentUser={currentUser}
+      />
+
+      {/* Sticky Bottom Navigation for Mobile Devices */}
+      <MobileBottomBar
+        cartCount={totalCartCount}
+        onOpenCart={() => setIsCartOpen(true)}
+        onFocusSearch={handleFocusSearch}
+        onScrollToCategories={handleScrollToCategories}
+        onOpenWhatsApp={handleOpenWhatsAppStore}
       />
     </div>
   );

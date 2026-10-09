@@ -21,6 +21,19 @@ export function ProductZoomModal({
     setZoomPos({ x, y });
   };
 
+  const handleTouchMove = (e) => {
+    if (!imageRef.current || !e.touches[0]) return;
+    const touch = e.touches[0];
+    const { left, top, width, height } = imageRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((touch.clientX - left) / width) * 100));
+    const y = Math.max(0, Math.min(100, ((touch.clientY - top) / height) * 100));
+    setZoomPos({ x, y });
+  };
+
+  const handleTouchStart = () => {
+    setIsHovering((prev) => !prev);
+  };
+
   return (
     <div className="modal-backdrop animate-fade-in" onClick={onClose}>
       <div
@@ -45,6 +58,8 @@ export function ProductZoomModal({
               onMouseEnter={() => setIsHovering(true)}
               onMouseLeave={() => setIsHovering(false)}
               onMouseMove={handleMouseMove}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
             >
               <img
                 src={product.image}
@@ -55,7 +70,7 @@ export function ProductZoomModal({
               {/* Magnifier Lens / Tooltip */}
               <div className="zoom-hint-badge">
                 <ZoomIn size={14} className="text-cyan" />
-                <span>Passe o cursor sobre a imagem para ampliar</span>
+                <span>Toque ou passe o dedo para ampliar</span>
               </div>
 
               {/* Zoom Overlay on Hover */}

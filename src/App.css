@@ -1687,3 +1687,285 @@
   background: rgba(37, 211, 102, 0.08);
 }
 
+/* =========================================================================
+   PWA INSTALL BANNER & MOBILE BOTTOM BAR
+   ========================================================================= */
+.pwa-install-banner {
+  position: relative;
+  z-index: 60;
+  background: linear-gradient(90deg, #091326 0%, #0d1e3d 100%);
+  border-bottom: 1px solid rgba(0, 210, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.pwa-icon-thumb {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #000;
+  padding: 2px;
+}
+
+.pwa-dismiss-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pwa-dismiss-btn:hover {
+  color: #fff;
+}
+
+/* Fixed Bottom Navigation Bar for Mobile */
+.mobile-bottom-nav-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: rgba(11, 15, 25, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-light);
+  z-index: 90;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0 0.5rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-nav-item {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  min-width: 58px;
+}
+.mobile-nav-item:active, .mobile-nav-item:hover {
+  color: var(--accent-cyan);
+  background: rgba(0, 119, 255, 0.1);
+}
+
+.mobile-cart-icon-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.mobile-cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -10px;
+  background: var(--accent-danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.6);
+  animation: pulseGlow 1.6s infinite;
+}
+
+/* =========================================================================
+   COMPREHENSIVE MOBILE OPTIMIZATIONS (≤ 768px)
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Give body bottom space for sticky bar */
+  body {
+    padding-bottom: 68px;
+  }
+
+  .mobile-bottom-nav-bar {
+    display: flex;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Top micro-bar: clean single row */
+  .top-micro-bar {
+    padding: 0.45rem 0.75rem;
+  }
+  .top-micro-links {
+    gap: 0.5rem !important;
+  }
+  .partner-access-pill, .admin-access-pill {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.68rem;
+  }
+
+  /* Header row compact */
+  .main-header-row {
+    padding: 0.6rem 0.75rem;
+    gap: 0.75rem;
+  }
+  .brand-logo-img {
+    height: 38px;
+  }
+  .search-input {
+    padding: 0.55rem 2rem 0.55rem 2.4rem;
+    font-size: 0.82rem;
+  }
+  .search-icon {
+    left: 0.75rem;
+  }
+
+  /* Hero Section for mobile */
+  .hero-showcase-section {
+    padding: 1.25rem 0 1rem;
+  }
+  .hero-title {
+    font-size: 1.65rem;
+    line-height: 1.25;
+  }
+  .hero-description {
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .hero-features-row {
+    gap: 0.65rem;
+  }
+  .feature-item {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+  }
+  .showcase-card {
+    padding: 1rem;
+  }
+  .showcase-stats-grid {
+    gap: 0.5rem;
+  }
+  .stat-number {
+    font-size: 1.05rem;
+  }
+
+  /* Category shelves on mobile */
+  .category-filter-wrapper {
+    padding: 1rem 0 0.75rem;
+  }
+  .shelf-header-row {
+    margin-bottom: 0.65rem;
+  }
+  .shelf-title {
+    font-size: 0.92rem;
+  }
+  .categories-scroll-row {
+    gap: 0.5rem;
+    padding-bottom: 0.35rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .categories-scroll-row::-webkit-scrollbar {
+    display: none;
+  }
+  .category-pill-btn {
+    padding: 0.45rem 0.8rem;
+    font-size: 0.78rem;
+  }
+
+  /* Products Grid: 2 clean columns on mobile smartphones */
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+    margin-top: 1rem;
+  }
+
+  .product-card {
+    border-radius: var(--radius-md);
+  }
+  .product-img-wrapper {
+    height: 140px;
+  }
+  .card-top-badges {
+    top: 0.4rem;
+    left: 0.4rem;
+    right: 0.4rem;
+  }
+  .badge {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.4rem;
+  }
+  .product-info-body {
+    padding: 0.65rem;
+  }
+  .product-title {
+    font-size: 0.82rem;
+    margin: 0.3rem 0;
+    height: 2.8em;
+  }
+  .product-vehicles-list {
+    margin-bottom: 0.5rem;
+  }
+  .vehicle-tag {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.35rem;
+  }
+  .price-pix-value {
+    font-size: 1.05rem;
+  }
+  .price-regular-row {
+    font-size: 0.65rem;
+  }
+  .product-card-actions .btn {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  /* Cart Drawer as Fullscreen / Bottom Sheet on mobile */
+  .cart-drawer {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Modals as mobile responsive sheets */
+  .modal-dialog {
+    max-height: 95vh;
+    border-radius: 16px 16px 0 0;
+    margin-top: auto;
+    width: 100% !important;
+  }
+  .modal-backdrop {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .zoom-modal-dialog, .checkout-modal-dialog, .partner-app-dialog {
+    padding: 1.25rem 1rem;
+  }
+  .zoom-image-container {
+    height: 260px;
+  }
+  .payment-options-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem;
+  }
+
+  /* Admin Sidebar on mobile */
+  .admin-root-container {
+    flex-direction: column;
+  }
+  .admin-sidebar {
+    width: 100%;
+    padding: 1rem;
+  }
+}
+
+
