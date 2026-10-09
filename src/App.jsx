@@ -245,10 +245,12 @@ export function App() {
   };
 
   const handleFocusSearch = () => {
-    const input = document.querySelector('.search-input');
+    const input = document.getElementById('main-mobile-search-input') || document.querySelector('.search-input');
     if (input) {
-      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      input.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        input.focus();
+      }, 200);
     }
   };
 

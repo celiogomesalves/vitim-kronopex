@@ -57,6 +57,13 @@
 .block { display: block; }
 .inline { display: inline; }
 
+/* Responsive Visibility Helpers */
+.show-mobile { display: none !important; }
+.hide-mobile { display: flex; }
+div.hide-mobile, section.hide-mobile { display: block; }
+.badge-text-mobile { display: none; }
+.badge-text-full { display: inline; }
+
 /* Pulse Indicator */
 .pulse-dot {
   width: 8px;
@@ -1721,23 +1728,29 @@
   color: #fff;
 }
 
-/* Fixed Bottom Navigation Bar for Mobile */
+/* =========================================================================
+   FIXED BOTTOM NAVIGATION BAR FOR MOBILE (NATIVE APP FEEL)
+   ========================================================================= */
 .mobile-bottom-nav-bar {
   display: none;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 64px;
-  background: rgba(11, 15, 25, 0.96);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border-light);
-  z-index: 90;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100vw !important;
+  max-width: 100vw !important;
+  height: calc(62px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  background: rgba(9, 13, 23, 0.98) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-top: 1px solid rgba(0, 210, 255, 0.2) !important;
+  z-index: 99999 !important;
   justify-content: space-around;
   align-items: center;
   padding: 0 0.5rem;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -4px 25px rgba(0, 0, 0, 0.8) !important;
+  box-sizing: border-box;
 }
 
 .mobile-nav-item {
@@ -1752,14 +1765,15 @@
   font-size: 0.68rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border-radius: var(--radius-sm);
   transition: var(--transition);
-  min-width: 58px;
+  min-width: 54px;
+  -webkit-tap-highlight-color: transparent;
 }
 .mobile-nav-item:active, .mobile-nav-item:hover {
   color: var(--accent-cyan);
-  background: rgba(0, 119, 255, 0.1);
+  background: rgba(0, 119, 255, 0.12);
 }
 
 .mobile-cart-icon-box {
@@ -1786,186 +1800,573 @@
    COMPREHENSIVE MOBILE OPTIMIZATIONS (≤ 768px)
    ========================================================================= */
 @media (max-width: 768px) {
-  /* Give body bottom space for sticky bar */
+  /* Strict horizontal overflow prevention */
+  html, body {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    overflow-x: clip !important;
+    position: relative !important;
+  }
+
+  /* Body space for fixed bottom bar */
   body {
-    padding-bottom: 68px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
+  .container {
+    padding: 0 0.75rem !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Show / Hide Helpers */
+  .show-mobile {
+    display: block !important;
+  }
+  .hide-mobile {
+    display: none !important;
+  }
+  .badge-text-mobile {
+    display: inline !important;
+  }
+  .badge-text-full {
+    display: none !important;
+  }
+
+  /* Fixed Bottom Nav Bar is active */
   .mobile-bottom-nav-bar {
-    display: flex;
+    display: flex !important;
   }
 
-  /* Prevent iOS zoom on input focus */
+  /* Prevent iOS Safari auto-zoom on input focus */
   input, select, textarea {
     font-size: 16px !important;
   }
 
-  /* Top micro-bar: clean single row */
+  /* Top micro bar: hidden on mobile */
   .top-micro-bar {
-    padding: 0.45rem 0.75rem;
-  }
-  .top-micro-links {
-    gap: 0.5rem !important;
-  }
-  .partner-access-pill, .admin-access-pill {
-    padding: 0.15rem 0.45rem;
-    font-size: 0.68rem;
+    display: none !important;
   }
 
-  /* Header row compact */
-  .main-header-row {
-    padding: 0.6rem 0.75rem;
-    gap: 0.75rem;
-  }
-  .brand-logo-img {
-    height: 38px;
-  }
-  .search-input {
-    padding: 0.55rem 2rem 0.55rem 2.4rem;
-    font-size: 0.82rem;
-  }
-  .search-icon {
-    left: 0.75rem;
+  /* ----------------------------------------------------
+     Mobile App Header (Clean 2-row layout)
+     ---------------------------------------------------- */
+  .navbar-container {
+    padding: 0;
   }
 
-  /* Hero Section for mobile */
-  .hero-showcase-section {
-    padding: 1.25rem 0 1rem;
-  }
-  .hero-title {
-    font-size: 1.65rem;
-    line-height: 1.25;
-  }
-  .hero-description {
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-  }
-  .hero-features-row {
-    gap: 0.65rem;
-  }
-  .feature-item {
+  .mobile-app-header {
+    padding: 0.5rem 0.75rem 0.4rem;
+    background: #0b0f19;
     width: 100%;
-    padding: 0.5rem 0.75rem;
-  }
-  .showcase-card {
-    padding: 1rem;
-  }
-  .showcase-stats-grid {
-    gap: 0.5rem;
-  }
-  .stat-number {
-    font-size: 1.05rem;
+    box-sizing: border-box;
   }
 
-  /* Category shelves on mobile */
-  .category-filter-wrapper {
-    padding: 1rem 0 0.75rem;
-  }
-  .shelf-header-row {
-    margin-bottom: 0.65rem;
-  }
-  .shelf-title {
-    font-size: 0.92rem;
-  }
-  .categories-scroll-row {
+  .mobile-header-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.5rem;
-    padding-bottom: 0.35rem;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobile-icon-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light);
+    color: #fff;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .mobile-icon-btn:active {
+    background: rgba(0, 119, 255, 0.2);
+    border-color: var(--accent-cyan);
+  }
+
+  .mobile-logo-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    text-decoration: none;
+  }
+
+  .mobile-brand-logo-img {
+    height: 32px;
+    max-width: 145px;
+    object-fit: contain;
+  }
+
+  .mobile-cart-header-btn {
+    position: relative;
+    background: rgba(0, 119, 255, 0.15);
+    border-color: rgba(0, 119, 255, 0.3);
+    color: var(--accent-cyan);
+  }
+
+  .mobile-header-cart-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--accent-danger);
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 1px 5px;
+    border-radius: 9999px;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.6);
+  }
+
+  .mobile-search-row {
+    width: 100%;
+    margin-bottom: 0.35rem;
+  }
+
+  .mobile-search-box {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    position: relative;
+    width: 100%;
+  }
+
+  .mobile-search-box .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    color: var(--text-dim);
+  }
+
+  .mobile-search-box .search-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #fff;
+    padding: 0.55rem 2rem 0.55rem 2.4rem;
+    font-size: 0.85rem !important;
+    outline: none;
+  }
+
+  .mobile-search-box .clear-search-btn {
+    position: absolute;
+    right: 0.65rem;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .mobile-micro-ticker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* ----------------------------------------------------
+     Mobile Slide-in Drawer Menu
+     ---------------------------------------------------- */
+  .mobile-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: flex;
+  }
+
+  .mobile-menu-drawer {
+    width: 82%;
+    max-width: 320px;
+    height: 100%;
+    background: #0c111e;
+    border-right: 1px solid var(--border-light);
+    padding: 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.7);
+  }
+
+  .drawer-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .drawer-brand-logo {
+    height: 34px;
+    object-fit: contain;
+  }
+
+  .drawer-close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-light);
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .drawer-tagline-box {
+    margin-bottom: 1.25rem;
+  }
+
+  .drawer-nav-group {
+    margin-bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .drawer-group-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+    display: block;
+  }
+
+  .drawer-link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-light);
+    color: #fff;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+    text-decoration: none;
+    transition: var(--transition);
+  }
+  .drawer-link-item:active {
+    background: rgba(0, 119, 255, 0.15);
+    border-color: var(--accent-cyan);
+  }
+
+  .drawer-link-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .drawer-link-title {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .drawer-link-desc {
+    display: block;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+  }
+
+  .drawer-footer-actions {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* ----------------------------------------------------
+     Mobile Hero Section: Compact App Banner
+     ---------------------------------------------------- */
+  .hero-showcase-section {
+    padding: 0.5rem 0 0.25rem;
+  }
+
+  .mobile-hero-compact-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(0, 119, 255, 0.18) 0%, rgba(0, 210, 255, 0.08) 100%);
+    border: 1px solid rgba(0, 210, 255, 0.25);
+    margin: 0 0 0.5rem;
+  }
+
+  .compact-banner-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .compact-badge-glow {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #fff;
+    background: var(--primary);
+    padding: 2px 6px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .compact-banner-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 2px 0 1px;
+    line-height: 1.2;
+  }
+
+  .compact-banner-sub {
+    font-size: 0.68rem;
+    display: block;
+  }
+
+  .compact-whatsapp-pill {
+    background: rgba(37, 211, 102, 0.15);
+    border: 1px solid rgba(37, 211, 102, 0.4);
+    color: #25D366;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  /* ----------------------------------------------------
+     Category Shelves on Mobile
+     ---------------------------------------------------- */
+  .category-filter-wrapper {
+    padding: 0.4rem 0 0.5rem;
+  }
+
+  .shelf-header-row {
+    flex-wrap: wrap !important;
+    gap: 0.25rem !important;
+    margin-bottom: 0.45rem !important;
+  }
+
+  .shelf-title {
+    font-size: 0.92rem !important;
+    font-weight: 700;
+  }
+
+  .categories-scroll-row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 0.45rem !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 0.25rem !important;
   }
   .categories-scroll-row::-webkit-scrollbar {
-    display: none;
-  }
-  .category-pill-btn {
-    padding: 0.45rem 0.8rem;
-    font-size: 0.78rem;
+    display: none !important;
   }
 
-  /* Products Grid: 2 clean columns on mobile smartphones */
+  .category-pill-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.78rem !important;
+  }
+
+  /* ----------------------------------------------------
+     Products Section & 2-Column Mobile Grid
+     ---------------------------------------------------- */
+  .products-section {
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    padding: 0 0.75rem !important;
+  }
+
+  .vitrine-header-row {
+    flex-wrap: wrap !important;
+    gap: 0.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
   .products-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 0.75rem !important;
-    margin-top: 1rem;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.65rem !important;
+    margin-top: 0.5rem !important;
+    width: 100% !important;
   }
 
   .product-card {
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-md) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
-  .product-img-wrapper {
-    height: 140px;
-  }
+
   .card-top-badges {
-    top: 0.4rem;
-    left: 0.4rem;
-    right: 0.4rem;
+    top: 0.35rem !important;
+    left: 0.35rem !important;
+    right: 0.35rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    pointer-events: none;
+    z-index: 10;
   }
-  .badge {
-    font-size: 0.62rem;
-    padding: 0.15rem 0.4rem;
+
+  .card-top-badges .badge {
+    font-size: 0.58rem !important;
+    padding: 0.12rem 0.35rem !important;
+    border-radius: 4px !important;
   }
+
+  .product-img-wrapper {
+    height: 125px !important;
+  }
+
   .product-info-body {
-    padding: 0.65rem;
+    padding: 0.55rem !important;
   }
+
+  .product-brand-oem {
+    font-size: 0.62rem !important;
+    margin-bottom: 0.2rem !important;
+  }
+
   .product-title {
-    font-size: 0.82rem;
-    margin: 0.3rem 0;
-    height: 2.8em;
+    font-size: 0.78rem !important;
+    line-height: 1.25 !important;
+    height: 2.5em !important;
+    margin: 0.2rem 0 !important;
+    overflow: hidden !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
   }
+
   .product-vehicles-list {
-    margin-bottom: 0.5rem;
+    margin: 0.25rem 0 !important;
+    gap: 0.2rem !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
   }
+
   .vehicle-tag {
-    font-size: 0.62rem;
-    padding: 0.15rem 0.35rem;
+    font-size: 0.58rem !important;
+    padding: 0.1rem 0.3rem !important;
   }
+
+  .pricing-box {
+    margin: 0.35rem 0 !important;
+  }
+
+  .price-pix-label {
+    font-size: 0.62rem !important;
+  }
+
   .price-pix-value {
-    font-size: 1.05rem;
+    font-size: 0.98rem !important;
+    font-weight: 800 !important;
   }
+
   .price-regular-row {
-    font-size: 0.65rem;
+    font-size: 0.62rem !important;
   }
+
   .product-card-actions .btn {
-    padding: 0.5rem 0.5rem;
-    font-size: 0.78rem;
+    padding: 0.45rem 0.35rem !important;
+    font-size: 0.75rem !important;
   }
 
-  /* Cart Drawer as Fullscreen / Bottom Sheet on mobile */
+  /* ----------------------------------------------------
+     Footer: 1 Column on Mobile
+     ---------------------------------------------------- */
+  .footer-section {
+    padding: 2rem 0 1rem !important;
+    margin-top: 2rem !important;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.75rem !important;
+    padding-bottom: 1.5rem !important;
+  }
+
+  /* ----------------------------------------------------
+     Cart Drawer & Modals as Mobile Sheets
+     ---------------------------------------------------- */
   .cart-drawer {
-    max-width: 100%;
-    width: 100%;
-    border-radius: 16px 16px 0 0;
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 16px 16px 0 0 !important;
   }
 
-  /* Modals as mobile responsive sheets */
   .modal-dialog {
-    max-height: 95vh;
-    border-radius: 16px 16px 0 0;
-    margin-top: auto;
+    max-height: 95vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin-top: auto !important;
     width: 100% !important;
   }
+
   .modal-backdrop {
-    padding: 0;
-    align-items: flex-end;
-  }
-  .zoom-modal-dialog, .checkout-modal-dialog, .partner-app-dialog {
-    padding: 1.25rem 1rem;
-  }
-  .zoom-image-container {
-    height: 260px;
-  }
-  .payment-options-grid {
-    grid-template-columns: 1fr !important;
-    gap: 0.5rem;
+    padding: 0 !important;
+    align-items: flex-end !important;
   }
 
-  /* Admin Sidebar on mobile */
-  .admin-root-container {
-    flex-direction: column;
+  .zoom-modal-dialog, .checkout-modal-dialog, .partner-app-dialog {
+    padding: 1.25rem 1rem !important;
   }
+
+  .zoom-image-container {
+    height: 260px !important;
+  }
+
+  .payment-options-grid {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  .checkout-form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .admin-root-container {
+    flex-direction: column !important;
+  }
+
   .admin-sidebar {
-    width: 100%;
-    padding: 1rem;
+    width: 100% !important;
+    padding: 1rem !important;
   }
 }
+
 
 

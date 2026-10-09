@@ -16,18 +16,20 @@ export function ProductCard({
       <div className="card-top-badges">
         {product.isExpressDelivery && (
           <span className="badge badge-express">
-            <Sparkles size={11} /> Delivery Hoje
+            <Sparkles size={10} />
+            <span className="badge-text-full">Delivery Hoje</span>
+            <span className="badge-text-mobile">Hoje</span>
           </span>
         )}
         {isOutOfStock ? (
           <span className="badge badge-danger">Esgotado</span>
         ) : isLowStock ? (
           <span className="badge badge-low-stock">
-            <AlertCircle size={11} /> Restam {product.stock} un.
+            <AlertCircle size={10} /> {product.stock} un.
           </span>
         ) : (
           <span className="badge badge-stock">
-            <Check size={11} /> Em Estoque ({product.stock})
+            <Check size={10} /> {product.stock} un.
           </span>
         )}
       </div>
@@ -72,14 +74,14 @@ export function ProductCard({
 
         {/* Compatible Vehicles */}
         <div className="product-vehicles-list">
-          {product.vehicles && product.vehicles.slice(0, 3).map((v, idx) => (
+          {product.vehicles && product.vehicles.slice(0, 2).map((v, idx) => (
             <span key={idx} className="vehicle-tag">
               🚗 {v}
             </span>
           ))}
-          {product.vehicles && product.vehicles.length > 3 && (
+          {product.vehicles && product.vehicles.length > 2 && (
             <span className="vehicle-tag more-tag">
-              +{product.vehicles.length - 3} modelos
+              +{product.vehicles.length - 2}
             </span>
           )}
         </div>
@@ -87,13 +89,13 @@ export function ProductCard({
         {/* Pricing Area */}
         <div className="pricing-box">
           <div className="price-pix-row">
-            <span className="price-pix-label">À vista no PIX:</span>
+            <span className="price-pix-label">À vista PIX:</span>
             <span className="price-pix-value">
               R$ {product.pixDiscountPrice ? product.pixDiscountPrice.toFixed(2) : (product.price * 0.9).toFixed(2)}
             </span>
           </div>
           <div className="price-regular-row text-xs text-muted">
-            ou R$ {product.price.toFixed(2)} em até 3x no cartão
+            ou R$ {product.price.toFixed(2)} cartão
           </div>
         </div>
 
@@ -105,12 +107,14 @@ export function ProductCard({
             onClick={() => onAddToCart(product)}
             className={`btn w-full ${cartQuantity > 0 ? 'btn-secondary' : 'btn-primary'} flex-center gap-2`}
           >
-            <ShoppingBag size={17} />
-            {isOutOfStock
-              ? 'Indisponível'
-              : cartQuantity > 0
-              ? `Adicionado (${cartQuantity}) +1`
-              : 'Adicionar ao Carrinho'}
+            <ShoppingBag size={16} />
+            <span>
+              {isOutOfStock
+                ? 'Indisponível'
+                : cartQuantity > 0
+                ? `No Carrinho (${cartQuantity})`
+                : 'Comprar'}
+            </span>
           </button>
         </div>
       </div>
