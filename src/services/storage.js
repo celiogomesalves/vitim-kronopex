@@ -2,12 +2,15 @@ import { INITIAL_PRODUCTS } from '../data/mockProducts';
 import { INITIAL_COURIERS } from '../data/mockCouriers';
 import { INITIAL_ORDERS } from '../data/mockOrders';
 import { INITIAL_STAFF } from '../data/mockUsers';
+import { INITIAL_PARTNERS, INITIAL_PARTNER_REQUESTS } from '../data/mockPartners';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'kronopex_products',
   COURIERS: 'kronopex_couriers',
   ORDERS: 'kronopex_orders',
   STAFF: 'kronopex_staff',
+  PARTNERS: 'kronopex_partners',
+  PARTNER_REQUESTS: 'kronopex_partner_requests',
   CART: 'kronopex_cart',
   CURRENT_USER: 'kronopex_current_user',
   STORE_CONFIG: 'kronopex_store_config'
@@ -133,12 +136,102 @@ export const StorageService = {
     localStorage.setItem(STORAGE_KEYS.STORE_CONFIG, JSON.stringify(config));
   },
 
+  getPartners: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PARTNERS);
+      return data ? JSON.parse(data) : INITIAL_PARTNERS;
+    } catch {
+      return INITIAL_PARTNERS;
+    }
+  },
+
+  savePartners: (partners) => {
+    localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(partners));
+    window.dispatchEvent(new Event('kronopex_partners_updated'));
+  },
+
+  getPartnerRequests: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PARTNER_REQUESTS);
+      return data ? JSON.parse(data) : INITIAL_PARTNER_REQUESTS;
+    } catch {
+      return INITIAL_PARTNER_REQUESTS;
+    }
+  },
+
+  savePartnerRequests: (requests) => {
+    localStorage.setItem(STORAGE_KEYS.PARTNER_REQUESTS, JSON.stringify(requests));
+    window.dispatchEvent(new Event('kronopex_partner_requests_updated'));
+  },
+
+  submitPartnerRequest: (requestData) => {
+    const requests = StorageService.getPartnerRequests();
+    const newRequest = {
+      ...requestData,
+      id: `req-${Date.now().toString().slice(-4)}`,
+      status: 'pending',
+      requestedAt: new Date().toISOString()
+    };
+    StorageService.savePartnerRequests([newRequest, ...requests]);
+    return newRequest;
+  },
+
+  approvePartner: (requestId, commissionRate = 12) => {
+    const requests = StorageService.getPartnerRequests();
+    const req = requests.find((r) => r.id === requestId);
+    if (!req) return null;
+
+    // Create active partner
+    const partners = StorageService.getPartners();
+    const newPartner = {
+      id: `partner-${Date.now().toString().slice(-4)}`,
+      companyName: req.companyName,
+      tradeName: req.tradeName || req.companyName,
+      cnpj: req.cnpj,
+      contactName: req.contactName,
+      email: req.email,
+      phone: req.phone,
+      city: req.city,
+      commissionRate: Number(commissionRate) || 12,
+      status: 'active',
+      pixKey: req.pixKey || req.email,
+      categories: req.categories || ['motor', 'freios'],
+      approvedAt: new Date().toISOString(),
+      metrics: {
+        totalSold: 0,
+        commissionRetained: 0,
+        payoutDue: 0,
+        activeProductsCount: 0
+      }
+    };
+
+    StorageService.savePartners([newPartner, ...partners]);
+
+    // Update request status
+    const updatedRequests = requests.map((r) =>
+      r.id === requestId ? { ...r, status: 'approved' } : r
+    );
+    StorageService.savePartnerRequests(updatedRequests);
+
+    return newPartner;
+  },
+
+  rejectPartner: (requestId) => {
+    const requests = StorageService.getPartnerRequests();
+    const updated = requests.map((r) =>
+      r.id === requestId ? { ...r, status: 'rejected' } : r
+    );
+    StorageService.savePartnerRequests(updated);
+  },
+
   // Reset to initial state for demo testing
   resetDemoData: () => {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
     localStorage.setItem(STORAGE_KEYS.COURIERS, JSON.stringify(INITIAL_COURIERS));
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
     localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(INITIAL_STAFF));
+    localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(INITIAL_PARTNERS));
+    localStorage.setItem(STORAGE_KEYS.PARTNER_REQUESTS, JSON.stringify(INITIAL_PARTNER_REQUESTS));
     localStorage.setItem(STORAGE_KEYS.STORE_CONFIG, JSON.stringify(DEFAULT_CONFIG));
     window.location.reload();
   }

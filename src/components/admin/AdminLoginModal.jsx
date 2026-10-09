@@ -127,6 +127,37 @@ export function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
                 </span>
               </button>
             ))}
+
+            {/* Partner Login Demo */}
+            <button
+              type="button"
+              onClick={() => {
+                onLoginSuccess({
+                  id: 'partner-01',
+                  name: 'Marcelo Penteado',
+                  companyName: 'Distribuidora Paulista de Autopeças (DPA)',
+                  tradeName: 'DPA Distribuidora',
+                  role: 'partner',
+                  roleName: 'Fornecedor Parceiro',
+                  commissionRate: 12,
+                  email: 'marcelo@distribuidorapaulista.com.br'
+                });
+                onClose();
+              }}
+              className="role-select-card flex-between"
+              style={{ borderLeft: '3px solid var(--accent-cyan)' }}
+            >
+              <div className="flex-center gap-3">
+                <div className="courier-avatar-box">
+                  <span style={{ fontSize: '18px' }}>🏢</span>
+                </div>
+                <div className="text-left">
+                  <strong className="block text-xs text-main">DPA Distribuidora</strong>
+                  <span className="text-xs text-cyan">Fornecedor Parceiro (12% Comissão)</span>
+                </div>
+              </div>
+              <span className="badge badge-express">PARCEIRO</span>
+            </button>
           </div>
         </div>
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { MessageCircle, MapPin, Clock, Shield, Sparkles } from 'lucide-react';
 
-export function Footer({ onOpenAdmin, currentUser }) {
+export function Footer({ onOpenAdmin, onOpenPartnerModal, currentUser }) {
   return (
     <footer className="footer-section">
       <div className="container footer-grid">
@@ -67,21 +67,31 @@ export function Footer({ onOpenAdmin, currentUser }) {
 
         {/* Admin / Staff Portal Discrete Access */}
         <div className="footer-staff-col">
-          <h4 className="footer-heading font-bold text-sm mb-3">Área Restrita da Equipe</h4>
+          <h4 className="footer-heading font-bold text-sm mb-3">Parcerias & Área Restrita</h4>
           <p className="text-xs text-muted mb-3">
-            Acesso reservado para administradores, gerentes de estoque e operadores de entrega.
+            Distribuidores parceiros e equipe operacional KronoPex.
           </p>
-          <button
-            onClick={onOpenAdmin}
-            className="btn btn-secondary btn-sm flex-center gap-2 w-full"
-          >
-            <Shield size={15} className="text-cyan" />
-            <span>
-              {currentUser
-                ? `Painel de Gestão (${currentUser.roleName})`
-                : 'Acessar Painel Administrativo'}
-            </span>
-          </button>
+          <div className="space-y-2 flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={onOpenPartnerModal}
+              className="btn btn-outline-primary btn-sm flex-center gap-2 w-full"
+            >
+              <span>Seja um Fornecedor Parceiro</span>
+            </button>
+            <button
+              type="button"
+              onClick={onOpenAdmin}
+              className="btn btn-secondary btn-sm flex-center gap-2 w-full"
+            >
+              <Shield size={15} className="text-cyan" />
+              <span>
+                {currentUser
+                  ? `Painel (${currentUser.roleName})`
+                  : 'Acessar Painel / Equipe'}
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 

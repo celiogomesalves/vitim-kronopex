@@ -6,6 +6,7 @@ import {
   Truck,
   Users,
   Settings,
+  Briefcase,
   Store,
   LogOut,
   ShieldCheck,
@@ -15,6 +16,7 @@ import { AdminDashboard } from './AdminDashboard';
 import { AdminProducts } from './AdminProducts';
 import { AdminOrders } from './AdminOrders';
 import { AdminCouriers } from './AdminCouriers';
+import { AdminPartners } from './AdminPartners';
 import { AdminUsers } from './AdminUsers';
 import { AdminSettings } from './AdminSettings';
 
@@ -30,6 +32,11 @@ export function AdminLayout({
   onSaveCouriers,
   staff,
   onSaveStaff,
+  partners = [],
+  onSavePartners,
+  partnerRequests = [],
+  onApprovePartner,
+  onRejectPartner,
   config,
   onSaveConfig
 }) {
@@ -44,6 +51,7 @@ export function AdminLayout({
     { id: 'products', label: 'Estoque & Peças', icon: Package, count: products.filter((p) => p.stock <= p.minStock).length },
     { id: 'orders', label: 'Pedidos & Expedição', icon: ShoppingBag, count: orders.filter((o) => o.status === 'pending').length },
     { id: 'couriers', label: 'KronoPex Delivery', icon: Truck },
+    { id: 'partners', label: 'Parceiros & Fornecedores', icon: Briefcase, count: partnerRequests.filter((r) => r.status === 'pending').length, adminOnly: true },
     { id: 'users', label: 'Equipe & Permissões', icon: Users, adminOnly: true },
     { id: 'settings', label: 'Configurações', icon: Settings, adminOnly: true }
   ];
@@ -180,6 +188,17 @@ export function AdminLayout({
               couriers={couriers}
               onSaveCouriers={onSaveCouriers}
               canEdit={canManageCouriers}
+            />
+          )}
+
+          {activeTab === 'partners' && (
+            <AdminPartners
+              partners={partners}
+              partnerRequests={partnerRequests}
+              onApprovePartner={onApprovePartner}
+              onRejectPartner={onRejectPartner}
+              onSavePartners={onSavePartners}
+              orders={orders}
             />
           )}
 

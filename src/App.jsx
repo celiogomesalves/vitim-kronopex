@@ -12,6 +12,8 @@ import { OrderSuccessModal } from './components/OrderSuccessModal';
 import { Footer } from './components/Footer';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
+import { PartnerApplicationModal } from './components/PartnerApplicationModal';
+import { PartnerPortal } from './components/partner/PartnerPortal';
 import './App.css';
 
 export function App() {
@@ -20,6 +22,8 @@ export function App() {
   const [orders, setOrders] = useState(() => StorageService.getOrders());
   const [couriers, setCouriers] = useState(() => StorageService.getCouriers());
   const [staff, setStaff] = useState(() => StorageService.getStaff());
+  const [partners, setPartners] = useState(() => StorageService.getPartners());
+  const [partnerRequests, setPartnerRequests] = useState(() => StorageService.getPartnerRequests());
   const [config, setConfig] = useState(() => StorageService.getConfig());
 
   // Current session & view
@@ -35,6 +39,7 @@ export function App() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState(null);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
+  const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
 
   // Listen to Storage update events across components
   useEffect(() => {
@@ -47,15 +52,25 @@ export function App() {
     const handleCouriersUpdated = () => {
       setCouriers(StorageService.getCouriers());
     };
+    const handlePartnersUpdated = () => {
+      setPartners(StorageService.getPartners());
+    };
+    const handlePartnerRequestsUpdated = () => {
+      setPartnerRequests(StorageService.getPartnerRequests());
+    };
 
     window.addEventListener('kronopex_products_updated', handleProductsUpdated);
     window.addEventListener('kronopex_orders_updated', handleOrdersUpdated);
     window.addEventListener('kronopex_couriers_updated', handleCouriersUpdated);
+    window.addEventListener('kronopex_partners_updated', handlePartnersUpdated);
+    window.addEventListener('kronopex_partner_requests_updated', handlePartnerRequestsUpdated);
 
     return () => {
       window.removeEventListener('kronopex_products_updated', handleProductsUpdated);
       window.removeEventListener('kronopex_orders_updated', handleOrdersUpdated);
       window.removeEventListener('kronopex_couriers_updated', handleCouriersUpdated);
+      window.removeEventListener('kronopex_partners_updated', handlePartnersUpdated);
+      window.removeEventListener('kronopex_partner_requests_updated', handlePartnerRequestsUpdated);
     };
   }, []);
 
@@ -185,6 +200,35 @@ export function App() {
     setStaff(updated);
   };
 
+  const handleSavePartners = (updated) => {
+    StorageService.savePartners(updated);
+    setPartners(updated);
+  };
+
+  const handleSubmitPartnerApplication = (requestData) => {
+    StorageService.submitPartnerRequest(requestData);
+    setPartnerRequests(StorageService.getPartnerRequests());
+    FcmService.sendLocalNotification('🏢 Nova Solicitação de Parceria!', {
+      body: `${requestData.companyName} enviou uma proposta para vender na loja!`,
+      tag: 'new-partner-req'
+    });
+  };
+
+  const handleApprovePartner = (requestId, commissionRate) => {
+    StorageService.approvePartner(requestId, commissionRate);
+    setPartners(StorageService.getPartners());
+    setPartnerRequests(StorageService.getPartnerRequests());
+    FcmService.sendLocalNotification('✅ Fornecedor Aprovado!', {
+      body: `Novo parceiro homologado com ${commissionRate}% de comissão!`,
+      tag: 'approved-partner'
+    });
+  };
+
+  const handleRejectPartner = (requestId) => {
+    StorageService.rejectPartner(requestId);
+    setPartnerRequests(StorageService.getPartnerRequests());
+  };
+
   const handleSaveConfig = (updated) => {
     StorageService.saveConfig(updated);
     setConfig(updated);
@@ -197,6 +241,19 @@ export function App() {
       '_blank'
     );
   };
+
+  // View: Partner Portal (Dedicated supplier view)
+  if (viewMode === 'admin' && currentUser?.role === 'partner') {
+    return (
+      <PartnerPortal
+        partner={currentUser}
+        onLogout={handleLogoutAdmin}
+        onBackToStore={() => setViewMode('store')}
+        products={products}
+        onSaveProducts={handleSaveProducts}
+      />
+    );
+  }
 
   // View: Admin Panel
   if (viewMode === 'admin' && currentUser) {
@@ -213,6 +270,11 @@ export function App() {
         onSaveCouriers={handleSaveCouriers}
         staff={staff}
         onSaveStaff={handleSaveStaff}
+        partners={partners}
+        onSavePartners={handleSavePartners}
+        partnerRequests={partnerRequests}
+        onApprovePartner={handleApprovePartner}
+        onRejectPartner={handleRejectPartner}
         config={config}
         onSaveConfig={handleSaveConfig}
       />
@@ -231,6 +293,7 @@ export function App() {
         cartCount={totalCartCount}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenAdmin={handleOpenAdminPortal}
+        onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         currentUser={currentUser}
       />
 
@@ -354,9 +417,17 @@ export function App() {
         onLoginSuccess={handleLoginSuccess}
       />
 
+      {/* Partner Application Modal (Marketplace Onboarding) */}
+      <PartnerApplicationModal
+        isOpen={isPartnerModalOpen}
+        onClose={() => setIsPartnerModalOpen(false)}
+        onSubmitApplication={handleSubmitPartnerApplication}
+      />
+
       {/* Footer */}
       <Footer
         onOpenAdmin={handleOpenAdminPortal}
+        onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         currentUser={currentUser}
       />
     </div>

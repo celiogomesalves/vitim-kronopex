@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, ShoppingBag, Truck, ShieldCheck, UserCheck, Shield } from 'lucide-react';
+import { Search, ShoppingBag, Truck, ShieldCheck, UserCheck, Shield, Briefcase } from 'lucide-react';
 
 export function Navbar({
   searchTerm,
@@ -7,6 +7,7 @@ export function Navbar({
   cartCount,
   onOpenCart,
   onOpenAdmin,
+  onOpenPartnerModal,
   currentUser
 }) {
   return (
@@ -23,6 +24,14 @@ export function Navbar({
             <span className="flex-center gap-1 text-muted">
               <ShieldCheck size={14} className="text-cyan" /> 100% Peças Originais
             </span>
+            <button
+              onClick={onOpenPartnerModal}
+              className="partner-access-pill flex-center gap-1"
+              title="Cadastre sua distribuidora para vender na KronoPex"
+            >
+              <Briefcase size={13} />
+              <span>Seja um Parceiro / Distribuidor</span>
+            </button>
             <button
               onClick={onOpenAdmin}
               className="admin-access-pill flex-center gap-1"
