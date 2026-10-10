@@ -1,26 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Building2,
   Package,
   Plus,
-  DollarSign,
-  TrendingUp,
-  Percent,
   LogOut,
   Store,
-  Layers,
   Edit2,
   Trash2,
-  CheckCircle,
-  Truck,
-  AlertCircle,
   Clock,
   CheckCircle2,
   XCircle
 } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { ImageUploadSelector } from '../common/ImageUploadSelector';
-import { formatCurrency } from '../../utils/formatters';
+import { SmartPagination } from '../common/SmartPagination';
+import { QuickCategoryModal } from '../common/QuickCategoryModal';
+import {
+  formatCurrency,
+  maskCurrencyInput,
+  parseCurrencyToNumber
+} from '../../utils/formatters';
 
 export function PartnerPortal({
   partner,
@@ -32,6 +31,11 @@ export function PartnerPortal({
 }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [isQuickCatOpen, setIsQuickCatOpen] = useState(false);
+
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
 
   // Confirmações
   const [confirmModal, setConfirmModal] = useState({
@@ -49,26 +53,37 @@ export function PartnerPortal({
     brand: partner?.tradeName || 'Distribuidora',
     oemCode: '',
     vehicles: '',
-    price: '',
+    price: 0,
     stock: '',
     image: 'https://images.unsplash.com/photo-1600793575654-910699b5e4d4?w=800&auto=format&fit=crop&q=80',
     description: ''
   });
 
+  const [priceInputDisplay, setPriceInputDisplay] = useState('');
+
   // Filtra produtos pertencentes a este parceiro
-  const partnerProducts = products.filter(
-    (p) => p.partnerId === partner?.id || p.brand?.includes(partner?.tradeName)
-  );
+  const partnerProducts = useMemo(() => {
+    return products.filter(
+      (p) => p.partnerId === partner?.id || p.brand?.includes(partner?.tradeName)
+    );
+  }, [products, partner]);
+
+  const totalPages = Math.ceil(partnerProducts.length / itemsPerPage) || 1;
+  const paginatedPartnerProducts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return partnerProducts.slice(start, start + itemsPerPage);
+  }, [partnerProducts, currentPage, itemsPerPage]);
 
   const handleOpenAdd = () => {
     setEditingProduct(null);
+    setPriceInputDisplay('');
     setFormData({
       name: '',
       category: categories.find((c) => c.id !== 'all')?.id || 'freios',
       brand: partner?.tradeName || 'Distribuidora',
       oemCode: '',
       vehicles: '',
-      price: '',
+      price: 0,
       stock: '',
       image: 'https://images.unsplash.com/photo-1600793575654-910699b5e4d4?w=800&auto=format&fit=crop&q=80',
       description: ''
@@ -78,18 +93,27 @@ export function PartnerPortal({
 
   const handleOpenEdit = (product) => {
     setEditingProduct(product);
+    setPriceInputDisplay(maskCurrencyInput(Math.round(product.price * 100)));
     setFormData({
       name: product.name,
       category: product.category,
       brand: product.brand,
       oemCode: product.oemCode,
       vehicles: product.vehicles ? product.vehicles.join(', ') : '',
-      price: product.price.toString(),
+      price: product.price,
       stock: product.stock.toString(),
       image: product.image,
       description: product.description || ''
     });
     setIsAddModalOpen(true);
+  };
+
+  const handlePriceChange = (e) => {
+    const rawValue = e.target.value;
+    const formatted = maskCurrencyInput(rawValue);
+    setPriceInputDisplay(formatted);
+    const numeric = parseCurrencyToNumber(formatted);
+    setFormData((prev) => ({ ...prev, price: numeric }));
   };
 
   const handleFormSubmit = (e) => {
@@ -109,9 +133,9 @@ export function PartnerPortal({
   };
 
   const executeSaveProduct = (targetId, data) => {
-    const priceNum = parseFloat(data.price) || 0;
+    const priceNum = Number(data.price) || 0;
     const stockNum = parseInt(data.stock, 10) || 0;
-    const vehiclesArr = data.vehicles
+    const vehiclesArr = (data.vehicles || '')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
@@ -303,14 +327,14 @@ export function PartnerPortal({
                 </tr>
               </thead>
               <tbody>
-                {partnerProducts.length === 0 ? (
+                {paginatedPartnerProducts.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center py-10 text-muted text-xs">
                       Você ainda não cadastrou nenhuma peça. Clique em "Anunciar Nova Peça" para começar!
                     </td>
                   </tr>
                 ) : (
-                  partnerProducts.map((p) => {
+                  paginatedPartnerProducts.map((p) => {
                     const commissionRate = (partner?.commissionRate || 12) / 100;
                     const netEarning = p.price * (1 - commissionRate);
                     const isApproved = p.approvalStatus === 'approved';
@@ -397,6 +421,19 @@ export function PartnerPortal({
                 )}
               </tbody>
             </table>
+
+            {/* Paginação do Parceiro */}
+            {totalPages > 1 && (
+              <div className="p-4 border-top">
+                <SmartPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={partnerProducts.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -431,8 +468,20 @@ export function PartnerPortal({
                 />
               </div>
 
+              {/* Categoria com Botão de Acesso Rápido */}
               <div className="form-field mb-3">
-                <label>Categoria *</label>
+                <div className="flex-between mb-1">
+                  <label>Categoria *</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickCatOpen(true)}
+                    className="text-xs text-cyan hover-underline flex-center gap-1"
+                    title="Adicionar categoria rápida"
+                  >
+                    <Plus size={12} />
+                    <span>+ Nova Categoria</span>
+                  </button>
+                </div>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -466,16 +515,25 @@ export function PartnerPortal({
                 />
               </div>
 
+              {/* Preço com Máscara Monetária Real */}
               <div className="form-field mb-3">
-                <label>Preço de Venda ao Consumidor (R$) *</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  placeholder="249.90"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                />
+                <label>Preço ao Consumidor (R$) *</label>
+                <div className="input-currency-group">
+                  <span className="currency-prefix">R$</span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="0,00"
+                    value={priceInputDisplay}
+                    onChange={handlePriceChange}
+                    className="input-currency"
+                  />
+                </div>
+                {formData.price > 0 && (
+                  <span className="text-xs text-green block mt-1">
+                    Seu repasse líquido estimado: {formatCurrency(formData.price * (1 - (partner?.commissionRate || 12) / 100))}
+                  </span>
+                )}
               </div>
 
               <div className="form-field mb-3">
@@ -533,6 +591,15 @@ export function PartnerPortal({
           </div>
         </div>
       )}
+
+      {/* Modal Rápido de Criação de Categoria */}
+      <QuickCategoryModal
+        isOpen={isQuickCatOpen}
+        onClose={() => setIsQuickCatOpen(false)}
+        onCategoryCreated={(newCat) => {
+          setFormData((prev) => ({ ...prev, category: newCat.id }));
+        }}
+      />
 
       {/* Confirmação Universal */}
       <ConfirmationModal

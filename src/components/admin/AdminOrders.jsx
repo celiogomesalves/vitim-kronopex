@@ -9,7 +9,10 @@ import {
 } from 'lucide-react';
 import { FcmService } from '../../services/fcm';
 import { ConfirmationModal } from '../common/ConfirmationModal';
+import { SmartPagination } from '../common/SmartPagination';
 import { formatCurrency, formatPhone, formatDateTime } from '../../utils/formatters';
+
+const ORDERS_PER_PAGE = 8;
 
 export function AdminOrders({
   orders,
@@ -19,6 +22,7 @@ export function AdminOrders({
 }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [ordersPage, setOrdersPage] = useState(1);
 
   // Confirmações
   const [confirmModal, setConfirmModal] = useState({
@@ -34,6 +38,13 @@ export function AdminOrders({
     if (statusFilter === 'all') return true;
     return o.status === statusFilter;
   });
+
+  const totalOrderPages = Math.ceil(filteredOrders.length / ORDERS_PER_PAGE) || 1;
+  const currentOrderPage = Math.min(ordersPage, totalOrderPages);
+  const paginatedOrders = filteredOrders.slice(
+    (currentOrderPage - 1) * ORDERS_PER_PAGE,
+    currentOrderPage * ORDERS_PER_PAGE
+  );
 
   const handlePromptUpdateStatus = (orderId, newStatus) => {
     const statusLabels = {
@@ -148,7 +159,10 @@ export function AdminOrders({
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setStatusFilter(tab.id)}
+            onClick={() => {
+              setStatusFilter(tab.id);
+              setOrdersPage(1);
+            }}
             className={`order-tab-btn ${statusFilter === tab.id ? 'active' : ''}`}
           >
             <span>{tab.label}</span>
@@ -166,51 +180,62 @@ export function AdminOrders({
               Nenhum pedido encontrado nesta etapa.
             </div>
           ) : (
-            filteredOrders.map((order) => {
-              const isSelected = selectedOrder?.id === order.id;
+            <>
+              {paginatedOrders.map((order) => {
+                const isSelected = selectedOrder?.id === order.id;
 
-              return (
-                <div
-                  key={order.id}
-                  onClick={() => setSelectedOrder(order)}
-                  className={`order-admin-card glass-panel p-4 ${isSelected ? 'selected' : ''}`}
-                >
-                  <div className="order-card-head flex-between">
-                    <div className="flex-center gap-2">
-                      <span className="font-mono font-bold text-cyan text-sm">
-                        #{order.id}
+                return (
+                  <div
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                    className={`order-admin-card glass-panel p-4 ${isSelected ? 'selected' : ''}`}
+                  >
+                    <div className="order-card-head flex-between">
+                      <div className="flex-center gap-2">
+                        <span className="font-mono font-bold text-cyan text-sm">
+                          #{order.id}
+                        </span>
+                        {getStatusBadge(order.status)}
+                      </div>
+                      <span className="text-xs text-muted">
+                        {formatDateTime(order.createdAt)}
                       </span>
-                      {getStatusBadge(order.status)}
-                    </div>
-                    <span className="text-xs text-muted">
-                      {formatDateTime(order.createdAt)}
-                    </span>
-                  </div>
-
-                  <div className="order-card-body mt-3">
-                    <strong className="text-sm block text-main">{order.customer.name}</strong>
-                    <div className="flex-center gap-1 text-xs text-muted mt-1">
-                      <MapPin size={12} className="text-cyan" />
-                      <span>{order.customer.neighborhood} - {order.customer.city}</span>
                     </div>
 
-                    <div className="order-card-items-snippet mt-2 text-xs text-muted line-clamp-1">
-                      {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                    <div className="order-card-body mt-3">
+                      <strong className="text-sm block text-main">{order.customer.name}</strong>
+                      <div className="flex-center gap-1 text-xs text-muted mt-1">
+                        <MapPin size={12} className="text-cyan" />
+                        <span>{order.customer.neighborhood} - {order.customer.city}</span>
+                      </div>
+
+                      <div className="order-card-items-snippet mt-2 text-xs text-muted line-clamp-1">
+                        {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                      </div>
+                    </div>
+
+                    <div className="order-card-foot flex-between mt-3 pt-3 border-top text-xs">
+                      <span className="font-bold text-main">
+                        {formatCurrency(order.total)} ({order.paymentMethodName || order.paymentMethod?.toUpperCase()})
+                      </span>
+                      <span className="text-cyan flex-center gap-1">
+                        <span>Ver detalhes</span>
+                        <ChevronRight size={13} />
+                      </span>
                     </div>
                   </div>
+                );
+              })}
 
-                  <div className="order-card-foot flex-between mt-3 pt-3 border-top text-xs">
-                    <span className="font-bold text-main">
-                      {formatCurrency(order.total)} ({order.paymentMethodName || order.paymentMethod?.toUpperCase()})
-                    </span>
-                    <span className="text-cyan flex-center gap-1">
-                      <span>Ver detalhes</span>
-                      <ChevronRight size={13} />
-                    </span>
-                  </div>
-                </div>
-              );
-            })
+              <SmartPagination
+                currentPage={currentOrderPage}
+                totalPages={totalOrderPages}
+                totalItems={filteredOrders.length}
+                itemsPerPage={ORDERS_PER_PAGE}
+                onPageChange={setOrdersPage}
+                label="pedidos"
+              />
+            </>
           )}
         </div>
 

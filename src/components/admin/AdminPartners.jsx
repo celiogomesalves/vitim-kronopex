@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Briefcase,
   CheckCircle2,
@@ -12,13 +12,14 @@ import {
   MessageCircle,
   TrendingUp,
   AlertCircle,
-  Shield,
-  Key,
-  Layers,
-  ArrowUpRight
+  User,
+  QrCode,
+  Package,
+  Layers
 } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
-import { formatCurrency, formatPhone, formatCNPJ, formatDate } from '../../utils/formatters';
+import { SmartPagination } from '../common/SmartPagination';
+import { formatCurrency, formatPhone, formatCNPJ } from '../../utils/formatters';
 
 export function AdminPartners({
   partners,
@@ -34,6 +35,12 @@ export function AdminPartners({
   const [editingCommissionId, setEditingCommissionId] = useState(null);
   const [tempCommission, setTempCommission] = useState('');
 
+  // Paginação
+  const [requestsPage, setRequestsPage] = useState(1);
+  const [activePartnersPage, setActivePartnersPage] = useState(1);
+  const [financialPage, setFinancialPage] = useState(1);
+  const itemsPerPage = 6;
+
   // Confirmações
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -44,12 +51,36 @@ export function AdminPartners({
     variant: 'danger'
   });
 
-  const pendingRequests = partnerRequests.filter((r) => r.status === 'pending');
+  const pendingRequests = useMemo(() => {
+    return partnerRequests.filter((r) => r.status === 'pending');
+  }, [partnerRequests]);
 
   // Cálculos financeiros do marketplace
-  const totalPartnerGmv = partners.reduce((acc, p) => acc + (p.metrics?.totalSold || 0), 0);
-  const totalCommissionEarned = partners.reduce((acc, p) => acc + (p.metrics?.commissionRetained || 0), 0);
-  const totalPayoutDue = partners.reduce((acc, p) => acc + (p.metrics?.payoutDue || 0), 0);
+  const totalPartnerGmv = useMemo(() => {
+    return partners.reduce((acc, p) => acc + (p.metrics?.totalSold || 0), 0);
+  }, [partners]);
+
+  const totalCommissionEarned = useMemo(() => {
+    return partners.reduce((acc, p) => acc + (p.metrics?.commissionRetained || 0), 0);
+  }, [partners]);
+
+  const totalPayoutDue = useMemo(() => {
+    return partners.reduce((acc, p) => acc + (p.metrics?.payoutDue || 0), 0);
+  }, [partners]);
+
+  // Paginação Solicitações
+  const totalRequestsPages = Math.ceil(pendingRequests.length / itemsPerPage) || 1;
+  const paginatedRequests = useMemo(() => {
+    const start = (requestsPage - 1) * itemsPerPage;
+    return pendingRequests.slice(start, start + itemsPerPage);
+  }, [pendingRequests, requestsPage, itemsPerPage]);
+
+  // Paginação Parceiros Ativos
+  const totalActivePages = Math.ceil(partners.length / 8) || 1;
+  const paginatedPartners = useMemo(() => {
+    const start = (activePartnersPage - 1) * 8;
+    return partners.slice(start, start + 8);
+  }, [partners, activePartnersPage]);
 
   const handleOpenApproveModal = (req) => {
     setApprovingReq(req);
@@ -134,29 +165,14 @@ export function AdminPartners({
     setConfirmModal({ isOpen: false, title: '', message: '', actionType: '', payload: null, variant: 'danger' });
   };
 
-  const openWhatsAppApproval = (req, commissionRate) => {
-    const cleanPhone = req.phone.replace(/\D/g, '');
-    const tempPassword = `KP@${Math.floor(1000 + Math.random() * 9000)}`;
-    const msg = encodeURIComponent(
-      `🚗 Olá ${req.contactName}, da ${req.companyName}!\n\n` +
-      `Temos o prazer de informar que sua solicitação de parceria com a *KronoPex Auto Peças* foi *APROVADA*!\n\n` +
-      `*Condições acordadas:*\n` +
-      `▪ Comissão retida pela KronoPex: *${commissionRate}%* por peça vendida\n` +
-      `▪ Acesso ao Portal do Parceiro:\n` +
-      `  - Login: *${req.email}*\n` +
-      `  - Senha provisória: *${tempPassword}*\n\n` +
-      `Você já pode autenticar no sistema para cadastrar seu catálogo de peças e iniciar as vendas com a nossa frota de delivery express!`
-    );
-    window.open(`https://wa.me/55${cleanPhone}?text=${msg}`, '_blank');
-  };
-
   return (
     <div className="admin-page-content animate-fade-in">
+      {/* Page Header */}
       <div className="admin-page-header flex-between mb-6">
         <div>
           <h2 className="text-xl font-bold">Parcerias com Distribuidores & Marketplace</h2>
           <p className="text-xs text-muted">
-            Gestão de fornecedores parceiros, comissões retidas e relatórios de repasse financeiro
+            Gestão harmônica de fornecedores parceiros, comissões retidas e relatórios de repasse financeiro
           </p>
         </div>
 
@@ -167,7 +183,7 @@ export function AdminPartners({
         )}
       </div>
 
-      {/* KPI Cards Formatados com Padrão Brasileiro Real */}
+      {/* KPI Cards Harmoniosos */}
       <div className="kpi-cards-grid mb-6">
         <div className="kpi-card glass-panel" onClick={() => setActiveTab('financial')}>
           <div className="kpi-icon-wrap bg-primary-glow">
@@ -217,7 +233,10 @@ export function AdminPartners({
       {/* Abas de Navegação */}
       <div className="orders-filter-tabs glass-panel mb-6 flex-center gap-2">
         <button
-          onClick={() => setActiveTab('requests')}
+          onClick={() => {
+            setActiveTab('requests');
+            setRequestsPage(1);
+          }}
           className={`order-tab-btn ${activeTab === 'requests' ? 'active' : ''}`}
         >
           <Briefcase size={15} />
@@ -226,7 +245,10 @@ export function AdminPartners({
         </button>
 
         <button
-          onClick={() => setActiveTab('active')}
+          onClick={() => {
+            setActiveTab('active');
+            setActivePartnersPage(1);
+          }}
           className={`order-tab-btn ${activeTab === 'active' ? 'active' : ''}`}
         >
           <Building2 size={15} />
@@ -235,7 +257,10 @@ export function AdminPartners({
         </button>
 
         <button
-          onClick={() => setActiveTab('financial')}
+          onClick={() => {
+            setActiveTab('financial');
+            setFinancialPage(1);
+          }}
           className={`order-tab-btn ${activeTab === 'financial' ? 'active' : ''}`}
         >
           <DollarSign size={15} />
@@ -243,78 +268,132 @@ export function AdminPartners({
         </button>
       </div>
 
-      {/* TAB 1: Solicitações de Parceria (Espaçamento Aprimorado) */}
+      {/* TAB 1: Solicitações de Parceria (Cards Harmoniosos Modelo Torque) */}
       {activeTab === 'requests' && (
-        <div className="partner-requests-grid">
+        <div className="partner-tab-content">
           {pendingRequests.length === 0 ? (
-            <div className="glass-panel text-center py-12 text-muted text-xs">
-              <CheckCircle2 size={36} className="mx-auto mb-2 text-cyan opacity-40" />
-              Não há novas solicitações de parceria pendentes no momento.
+            <div className="glass-panel text-center py-16 text-muted text-xs">
+              <CheckCircle2 size={40} className="mx-auto mb-3 text-cyan opacity-40" />
+              <strong className="text-sm block text-main mb-1">Nenhuma solicitação pendente</strong>
+              Todas as propostas de distribuidores já foram avaliadas pela equipe.
             </div>
           ) : (
-            pendingRequests.map((req) => (
-              <div key={req.id} className="partner-request-card glass-panel p-5">
-                <div className="flex-between mb-4 pb-3 border-bottom">
-                  <div className="flex-center gap-3">
-                    <div className="p-2 rounded bg-surface text-cyan">
-                      <Building2 size={20} />
+            <>
+              <div className="partner-requests-grid mb-6">
+                {paginatedRequests.map((req) => (
+                  <div key={req.id} className="torque-partner-card glass-panel">
+                    {/* Top Header Card */}
+                    <div className="torque-card-header flex-between mb-4 pb-3 border-bottom">
+                      <div className="flex-center gap-3">
+                        <div className="torque-avatar-box">
+                          <Building2 size={22} className="text-cyan" />
+                        </div>
+                        <div>
+                          <strong className="torque-card-title block text-main">{req.companyName}</strong>
+                          <span className="text-xs text-muted font-mono">{formatCNPJ(req.cnpj)}</span>
+                        </div>
+                      </div>
+                      <span className="badge badge-warning flex-center gap-1 font-semibold text-xs">
+                        <AlertCircle size={11} /> Pendente
+                      </span>
                     </div>
-                    <div>
-                      <strong className="text-sm block text-main">{req.companyName}</strong>
-                      <span className="text-xs text-muted font-mono">CNPJ: {formatCNPJ(req.cnpj)}</span>
+
+                    {/* Data Fields Grid em 2 Colunas */}
+                    <div className="torque-card-details-grid">
+                      <div className="torque-data-field">
+                        <span className="torque-data-label flex-center gap-1">
+                          <User size={12} className="text-cyan" />
+                          <span>Responsável:</span>
+                        </span>
+                        <strong className="torque-data-value">{req.contactName}</strong>
+                      </div>
+
+                      <div className="torque-data-field">
+                        <span className="torque-data-label flex-center gap-1">
+                          <MapPin size={12} className="text-cyan" />
+                          <span>Localidade:</span>
+                        </span>
+                        <strong className="torque-data-value">{req.city}</strong>
+                      </div>
+
+                      <div className="torque-data-field">
+                        <span className="torque-data-label flex-center gap-1">
+                          <Phone size={12} className="text-cyan" />
+                          <span>WhatsApp:</span>
+                        </span>
+                        <strong className="torque-data-value">{formatPhone(req.phone)}</strong>
+                      </div>
+
+                      <div className="torque-data-field">
+                        <span className="torque-data-label flex-center gap-1">
+                          <Mail size={12} className="text-cyan" />
+                          <span>E-mail:</span>
+                        </span>
+                        <span className="torque-data-value truncate font-mono text-xs">{req.email}</span>
+                      </div>
+
+                      <div className="torque-data-field">
+                        <span className="torque-data-label flex-center gap-1">
+                          <QrCode size={12} className="text-cyan" />
+                          <span>Chave PIX:</span>
+                        </span>
+                        <span className="torque-data-value font-mono text-xs text-cyan truncate">{req.pixKey}</span>
+                      </div>
+
+                      <div className="torque-data-field">
+                        <span className="torque-data-label flex-center gap-1">
+                          <Package size={12} className="text-cyan" />
+                          <span>Volume Estimado:</span>
+                        </span>
+                        <strong className="torque-data-value">{req.estimatedSkus}</strong>
+                      </div>
+                    </div>
+
+                    {/* Proposta / Mensagem em Destaque */}
+                    {req.message && (
+                      <div className="torque-message-box mt-3 p-3 rounded-lg bg-surface border text-xs">
+                        <span className="text-dim block mb-1 font-semibold">Proposta do fornecedor:</span>
+                        <p className="text-main italic leading-relaxed">
+                          "{req.message}"
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Rodapé com Ações Harmoniosas */}
+                    <div className="torque-card-footer flex-center gap-3 justify-end pt-4 border-top mt-4">
+                      <button
+                        type="button"
+                        onClick={() => handlePromptReject(req)}
+                        className="btn btn-secondary btn-sm text-danger"
+                      >
+                        Recusar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenApproveModal(req)}
+                        className="btn btn-primary btn-sm flex-center gap-2"
+                      >
+                        <CheckCircle2 size={16} />
+                        <span>Aprovar & Homologar</span>
+                      </button>
                     </div>
                   </div>
-                  <span className="badge badge-low-stock">Aguardando Avaliação</span>
-                </div>
-
-                <div className="request-info-body text-xs text-muted my-4 space-y-2 leading-relaxed">
-                  <div className="flex-between py-1 border-bottom">
-                    <span className="text-dim">Responsável:</span>
-                    <strong className="text-main">{req.contactName} ({req.city})</strong>
-                  </div>
-                  <div className="flex-between py-1 border-bottom">
-                    <span className="text-dim">Telefone / WhatsApp:</span>
-                    <strong className="text-main">{formatPhone(req.phone)}</strong>
-                  </div>
-                  <div className="flex-between py-1 border-bottom">
-                    <span className="text-dim">E-mail Comercial:</span>
-                    <strong className="text-main">{req.email}</strong>
-                  </div>
-                  <div className="flex-between py-1 border-bottom">
-                    <span className="text-dim">Chave PIX Repasses:</span>
-                    <span className="font-mono text-cyan">{req.pixKey}</span>
-                  </div>
-                  <div className="flex-between py-1 border-bottom">
-                    <span className="text-dim">Volume Estimado:</span>
-                    <strong className="text-main">{req.estimatedSkus}</strong>
-                  </div>
-
-                  {req.message && (
-                    <div className="mt-3 p-3 rounded bg-surface text-main text-xs italic">
-                      "{req.message}"
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex-center gap-3 justify-end pt-4 border-top">
-                  <button
-                    type="button"
-                    onClick={() => handlePromptReject(req)}
-                    className="btn btn-secondary btn-xs text-danger"
-                  >
-                    Recusar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenApproveModal(req)}
-                    className="btn btn-primary btn-xs flex-center gap-1"
-                  >
-                    <CheckCircle2 size={14} />
-                    <span>Aprovar Parceria & Definir Comissão</span>
-                  </button>
-                </div>
+                ))}
               </div>
-            ))
+
+              {/* Paginação de Solicitações */}
+              {totalRequestsPages > 1 && (
+                <div className="glass-panel p-4 mb-4">
+                  <SmartPagination
+                    currentPage={requestsPage}
+                    totalPages={totalRequestsPages}
+                    totalItems={pendingRequests.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setRequestsPage}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
@@ -335,80 +414,101 @@ export function AdminPartners({
               </tr>
             </thead>
             <tbody>
-              {partners.map((partner) => (
-                <tr key={partner.id}>
-                  <td>
-                    <div>
-                      <strong className="text-xs text-main block">{partner.tradeName}</strong>
-                      <span className="text-xs text-muted">{partner.contactName} ({formatPhone(partner.phone)})</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="font-mono text-xs text-muted block">{formatCNPJ(partner.cnpj)}</span>
-                    <span className="text-xs text-dim">{partner.city}</span>
-                  </td>
-                  <td>
-                    {editingCommissionId === partner.id ? (
-                      <div className="flex-center gap-1">
-                        <input
-                          type="number"
-                          className="admin-input-xs"
-                          style={{ width: '60px' }}
-                          value={tempCommission}
-                          onChange={(e) => setTempCommission(e.target.value)}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSaveCommission(partner.id)}
-                          className="btn btn-primary btn-xs"
-                        >
-                          Salvar
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex-center gap-2">
-                        <strong className="text-cyan text-xs">{partner.commissionRate}%</strong>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingCommissionId(partner.id);
-                            setTempCommission(String(partner.commissionRate));
-                          }}
-                          className="text-xs text-muted hover-underline"
-                        >
-                          Alterar
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <strong className="text-xs text-main">
-                      {formatCurrency(partner.metrics?.totalSold || 0)}
-                    </strong>
-                  </td>
-                  <td>
-                    <strong className="text-xs text-warning">
-                      {formatCurrency(partner.metrics?.payoutDue || 0)}
-                    </strong>
-                  </td>
-                  <td>
-                    <span className={`badge ${partner.status === 'active' ? 'badge-stock' : 'badge-low-stock'}`}>
-                      {partner.status === 'active' ? 'Ativo' : 'Suspenso'}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => handlePromptTogglePartner(partner)}
-                      className={`btn btn-secondary btn-xs ${partner.status === 'active' ? 'text-warning' : 'text-green'}`}
-                    >
-                      {partner.status === 'active' ? 'Suspender' : 'Reativar'}
-                    </button>
+              {paginatedPartners.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-muted text-xs">
+                    Nenhum fornecedor ativo no momento.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedPartners.map((partner) => (
+                  <tr key={partner.id}>
+                    <td>
+                      <div>
+                        <strong className="text-xs text-main block">{partner.tradeName}</strong>
+                        <span className="text-xs text-muted">{partner.contactName} ({formatPhone(partner.phone)})</span>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-muted block">{formatCNPJ(partner.cnpj)}</span>
+                      <span className="text-xs text-dim">{partner.city}</span>
+                    </td>
+                    <td>
+                      {editingCommissionId === partner.id ? (
+                        <div className="flex-center gap-1">
+                          <input
+                            type="number"
+                            className="admin-input-xs"
+                            style={{ width: '60px' }}
+                            value={tempCommission}
+                            onChange={(e) => setTempCommission(e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSaveCommission(partner.id)}
+                            className="btn btn-primary btn-xs"
+                          >
+                            Salvar
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex-center gap-2">
+                          <strong className="text-cyan text-xs">{partner.commissionRate}%</strong>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingCommissionId(partner.id);
+                              setTempCommission(String(partner.commissionRate));
+                            }}
+                            className="text-xs text-muted hover-underline"
+                          >
+                            Alterar
+                          </button>
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <strong className="text-xs text-main">
+                        {formatCurrency(partner.metrics?.totalSold || 0)}
+                      </strong>
+                    </td>
+                    <td>
+                      <strong className="text-xs text-warning">
+                        {formatCurrency(partner.metrics?.payoutDue || 0)}
+                      </strong>
+                    </td>
+                    <td>
+                      <span className={`badge ${partner.status === 'active' ? 'badge-stock' : 'badge-low-stock'}`}>
+                        {partner.status === 'active' ? 'Ativo' : 'Suspenso'}
+                      </span>
+                    </td>
+                    <td className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => handlePromptTogglePartner(partner)}
+                        className={`btn btn-secondary btn-xs ${partner.status === 'active' ? 'text-warning' : 'text-green'}`}
+                      >
+                        {partner.status === 'active' ? 'Suspender' : 'Reativar'}
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+
+          {/* Paginação de Parceiros Ativos */}
+          {totalActivePages > 1 && (
+            <div className="p-4 border-top">
+              <SmartPagination
+                currentPage={activePartnersPage}
+                totalPages={totalActivePages}
+                totalItems={partners.length}
+                itemsPerPage={8}
+                onPageChange={setActivePartnersPage}
+              />
+            </div>
+          )}
         </div>
       )}
 

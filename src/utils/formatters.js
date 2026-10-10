@@ -19,6 +19,36 @@ export const formatCurrency = (value) => {
   }).format(Number(value));
 };
 
+/**
+ * Converte qualquer entrada (string formatada com R$, vírgulas ou pontos) para número float seguro.
+ */
+export const parseCurrencyToNumber = (value) => {
+  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+  if (!value) return 0;
+  // Remove R$, espaços e pontos de milhar, troca vírgula decimal por ponto
+  const cleaned = String(value)
+    .replace(/[R$\s]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
+/**
+ * Máscara monetária em tempo real ao digitar.
+ * Exemplo: usuário digita '19990' -> retorna '199,90'
+ */
+export const maskCurrencyInput = (value) => {
+  if (!value && value !== 0) return '';
+  const digits = String(value).replace(/\D/g, '');
+  if (!digits) return '';
+  const number = Number(digits) / 100;
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(number);
+};
+
 export const formatPhone = (phone) => {
   if (!phone) return '';
   const digits = String(phone).replace(/\D/g, '');

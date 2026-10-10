@@ -1319,12 +1319,14 @@ img.pwa-icon-thumb {
 }
 
 .admin-sidebar {
-  width: 280px;
+  width: 295px;
+  min-width: 295px;
   border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   padding: 1.25rem;
   background: #0b101c;
+  flex-shrink: 0;
 }
 
 .admin-sidebar-logo {
@@ -1355,6 +1357,7 @@ img.pwa-icon-thumb {
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
+  white-space: nowrap;
 }
 .admin-nav-item:hover {
   background: var(--bg-surface);
@@ -2814,3 +2817,246 @@ img.pwa-icon-thumb {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
   background: #0f172a;
 }
+
+/* =========================================================================
+   TORQUE-STYLE CARDS & SMART PAGINATION (Inspirado no Torque Auto Peças)
+   ========================================================================= */
+
+/* Campo com máscara e prefixo de Moeda Brasileira */
+.input-currency-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.currency-prefix {
+  position: absolute;
+  left: 0.9rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--accent-cyan);
+  pointer-events: none;
+  z-index: 2;
+  letter-spacing: 0.5px;
+}
+
+.input-currency {
+  padding-left: 2.7rem !important;
+  font-family: inherit;
+  font-weight: 600;
+}
+
+/* Smart Pagination Component */
+.smart-pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(11, 16, 28, 0.6);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.pagination-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pagination-badge-count {
+  background: rgba(0, 210, 255, 0.1);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.65rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: rgba(0, 210, 255, 0.15);
+  border-color: rgba(0, 210, 255, 0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+  background: linear-gradient(135deg, #0077ff, #00d2ff);
+  border-color: transparent;
+  color: #0b101c;
+  font-weight: 700;
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.35);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.pagination-ellipsis {
+  color: var(--text-muted);
+  padding: 0 0.25rem;
+  font-size: 0.85rem;
+}
+
+/* Cards de Parceiros & Fornecedores (Estilo Torque Auto Peças) */
+.torque-partner-card {
+  background: #0d1424;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+.torque-partner-card:hover {
+  border-color: rgba(0, 210, 255, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 210, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.torque-partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #0077ff, #00d2ff);
+  opacity: 0.7;
+}
+
+.torque-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.torque-avatar-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(0, 210, 255, 0.12);
+  border: 1px solid rgba(0, 210, 255, 0.25);
+  color: var(--accent-cyan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.torque-title-col {
+  flex: 1;
+}
+
+.torque-partner-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.2rem;
+}
+
+.torque-partner-cnpj {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.torque-card-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 1rem;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+  .torque-card-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.torque-data-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.torque-field-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.torque-field-value {
+  font-size: 0.85rem;
+  color: #e2e8f0;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.torque-message-box {
+  background: rgba(0, 119, 255, 0.05);
+  border-left: 3px solid var(--accent-blue);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 0.75rem 1rem;
+}
+
+.torque-message-text {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.45;
+  margin-top: 0.25rem;
+}
+
+.torque-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
