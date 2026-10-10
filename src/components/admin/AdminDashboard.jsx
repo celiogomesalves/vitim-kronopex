@@ -102,8 +102,9 @@ export function AdminDashboard({
               <span>Últimos Pedidos dos Clientes</span>
             </h3>
             <button
+              type="button"
               onClick={() => onNavigate && onNavigate('orders')}
-              className="text-xs text-cyan hover-underline flex-center gap-1"
+              className="btn-action-badge"
             >
               <span>Ver todos</span>
               <ArrowUpRight size={13} />
@@ -157,8 +158,9 @@ export function AdminDashboard({
               <span>Peças com Estoque Baixo</span>
             </h3>
             <button
+              type="button"
               onClick={() => onNavigate && onNavigate('products')}
-              className="text-xs text-cyan hover-underline flex-center gap-1"
+              className="btn-action-badge"
             >
               <span>Gerenciar Estoque</span>
               <ArrowUpRight size={13} />

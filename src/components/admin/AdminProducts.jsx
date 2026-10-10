@@ -634,8 +634,8 @@ export function AdminProducts({
                   <button
                     type="button"
                     onClick={() => setIsQuickCatOpen(true)}
-                    className="text-xs text-cyan hover-underline flex-center gap-1"
-                    title="Adicionar categoria rápida"
+                    className="btn-action-badge"
+                    title="Adicionar nova categoria rapidamente"
                   >
                     <Plus size={12} />
                     <span>+ Nova Categoria</span>
