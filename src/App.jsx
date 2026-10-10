@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { StorageService } from './services/storage';
 import { FcmService } from './services/fcm';
 import { Navbar } from './components/Navbar';
@@ -42,6 +42,71 @@ export function App() {
   const [completedOrder, setCompletedOrder] = useState(null);
   const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
   const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Check if any modal or drawer is active
+  const isAnyModalOpen = Boolean(
+    isCartOpen ||
+    isCheckoutOpen ||
+    zoomedProduct ||
+    completedOrder ||
+    isAdminLoginOpen ||
+    isPartnerModalOpen ||
+    isMobileMenuOpen
+  );
+
+  // Close all open modals & drawers
+  const closeAllModals = (popHistory = true) => {
+    const wasOpen = isAnyModalOpen;
+    setIsMobileMenuOpen(false);
+    setZoomedProduct(null);
+    setIsCartOpen(false);
+    setIsCheckoutOpen(false);
+    setCompletedOrder(null);
+    setIsAdminLoginOpen(false);
+    setIsPartnerModalOpen(false);
+
+    if (wasOpen && popHistory && window.history.state?.kronopexModal) {
+      window.history.back();
+    }
+  };
+
+  // Push state to browser history whenever any modal opens
+  const prevModalStateRef = useRef(false);
+  useEffect(() => {
+    if (isAnyModalOpen && !prevModalStateRef.current) {
+      window.history.pushState({ kronopexModal: true }, '');
+    }
+    prevModalStateRef.current = isAnyModalOpen;
+  }, [isAnyModalOpen]);
+
+  // Listen to popstate (Device Back button or Browser Back button)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isAnyModalOpen) {
+        closeAllModals(false);
+      } else if (viewMode === 'admin') {
+        setViewMode('store');
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isAnyModalOpen, viewMode]);
+
+  // Lock body scroll whenever ANY modal or mobile menu drawer is open
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      const originalTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = originalOverflow || '';
+        document.body.style.touchAction = originalTouchAction || '';
+      };
+    }
+  }, [isAnyModalOpen]);
 
   // Listen to Storage update events across components
   useEffect(() => {
@@ -324,6 +389,8 @@ export function App() {
         onOpenAdmin={handleOpenAdminPortal}
         onOpenPartnerModal={() => setIsPartnerModalOpen(true)}
         currentUser={currentUser}
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
       />
 
       {/* Hero Storefront Showcase */}
@@ -467,6 +534,7 @@ export function App() {
         onFocusSearch={handleFocusSearch}
         onScrollToCategories={handleScrollToCategories}
         onOpenWhatsApp={handleOpenWhatsAppStore}
+        onCloseAllModals={closeAllModals}
       />
     </div>
   );

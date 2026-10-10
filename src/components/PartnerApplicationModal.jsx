@@ -242,7 +242,7 @@ export function PartnerApplicationModal({ isOpen, onClose, onSubmitApplication }
                 />
               </div>
 
-              <div className="full-width flex-center gap-2 justify-end mt-2">
+              <div className="full-width partner-modal-actions flex-center gap-2 justify-end mt-3">
                 <button type="button" onClick={onClose} className="btn btn-secondary">
                   Cancelar
                 </button>

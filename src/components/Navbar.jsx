@@ -22,9 +22,13 @@ export function Navbar({
   onOpenCart,
   onOpenAdmin,
   onOpenPartnerModal,
-  currentUser
+  currentUser,
+  isMobileMenuOpen: controlledMenuOpen,
+  setIsMobileMenuOpen: setControlledMenuOpen
 }) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [localMobileMenuOpen, setLocalMobileMenuOpen] = useState(false);
+  const isMobileMenuOpen = controlledMenuOpen !== undefined ? controlledMenuOpen : localMobileMenuOpen;
+  const setIsMobileMenuOpen = setControlledMenuOpen !== undefined ? setControlledMenuOpen : setLocalMobileMenuOpen;
 
   const handleScrollToCategories = () => {
     setIsMobileMenuOpen(false);

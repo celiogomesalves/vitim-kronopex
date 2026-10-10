@@ -148,12 +148,15 @@ h1, h2, h3, h4, .brand-font {
   position: absolute;
   top: -120px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate3d(-50%, 0, 0);
+  -webkit-transform: translate3d(-50%, 0, 0);
   width: 900px;
   height: 550px;
   background: radial-gradient(circle, rgba(0, 119, 255, 0.18) 0%, rgba(0, 210, 255, 0.06) 45%, transparent 70%);
   filter: blur(90px);
   border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
 }
 
 .ambient-orb-bottom {
@@ -165,6 +168,10 @@ h1, h2, h3, h4, .brand-font {
   background: radial-gradient(circle, rgba(0, 119, 255, 0.12) 0%, rgba(0, 210, 255, 0.04) 50%, transparent 70%);
   filter: blur(110px);
   border-radius: 50%;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 /* Container */

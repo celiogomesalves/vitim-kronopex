@@ -11,7 +11,7 @@ export function ProductCard({
   const isLowStock = product.stock > 0 && product.stock <= product.minStock;
 
   return (
-    <div className="product-card glass-panel">
+    <div className="product-card">
       {/* Top Badges */}
       <div className="card-top-badges">
         {product.isExpressDelivery && (

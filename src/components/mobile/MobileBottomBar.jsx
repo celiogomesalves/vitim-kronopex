@@ -6,16 +6,28 @@ export function MobileBottomBar({
   onOpenCart,
   onFocusSearch,
   onScrollToCategories,
-  onOpenWhatsApp
+  onOpenWhatsApp,
+  onCloseAllModals
 }) {
+  const handleNav = (action) => {
+    if (onCloseAllModals) {
+      onCloseAllModals();
+    }
+    if (action) {
+      action();
+    }
+  };
+
   return (
     <nav className="mobile-bottom-nav-bar glass-panel" aria-label="Navegação rápida móvel">
       <button
         type="button"
         className="mobile-nav-item"
-        onClick={() => {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        }}
+        onClick={() =>
+          handleNav(() => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          })
+        }
       >
         <Home size={20} />
         <span>Início</span>
@@ -24,7 +36,7 @@ export function MobileBottomBar({
       <button
         type="button"
         className="mobile-nav-item"
-        onClick={onFocusSearch}
+        onClick={() => handleNav(onFocusSearch)}
       >
         <Search size={20} />
         <span>Buscar</span>
@@ -33,7 +45,7 @@ export function MobileBottomBar({
       <button
         type="button"
         className="mobile-nav-item"
-        onClick={onScrollToCategories}
+        onClick={() => handleNav(onScrollToCategories)}
       >
         <Layers size={20} />
         <span>Prateleiras</span>
@@ -42,7 +54,7 @@ export function MobileBottomBar({
       <button
         type="button"
         className="mobile-nav-item cart-nav-item"
-        onClick={onOpenCart}
+        onClick={() => handleNav(onOpenCart)}
       >
         <div className="mobile-cart-icon-box">
           <ShoppingBag size={20} />
@@ -56,7 +68,7 @@ export function MobileBottomBar({
       <button
         type="button"
         className="mobile-nav-item whatsapp-nav-item"
-        onClick={onOpenWhatsApp}
+        onClick={() => handleNav(onOpenWhatsApp)}
       >
         <MessageCircle size={20} className="text-green" />
         <span>WhatsApp</span>
