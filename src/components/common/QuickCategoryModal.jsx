@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Layers,
   Plus,
@@ -72,32 +73,81 @@ export function QuickCategoryModal({ isOpen, onClose, onCategoryCreated }) {
     onClose();
   };
 
-  return (
-    <div className="modal-backdrop animate-fade-in" onClick={onClose} style={{ zIndex: 10000 }}>
+  const modalContent = (
+    <div
+      className="modal-backdrop-portal"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 999999,
+        backgroundColor: 'rgba(3, 7, 18, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem',
+        overflowY: 'auto'
+      }}
+    >
       <div
-        className="modal-dialog quick-category-dialog glass-panel p-5"
+        className="quick-category-dialog"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '440px', width: '92%' }}
+        style={{
+          width: '100%',
+          maxWidth: '480px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          background: '#0d1524',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: '24px',
+          padding: '2.25rem',
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+          position: 'relative',
+          margin: 'auto'
+        }}
       >
-        <div className="modal-header flex-between mb-3 pb-2 border-bottom">
-          <h4 className="font-bold text-sm flex-center gap-2 text-main">
-            <Layers size={16} className="text-cyan" />
-            <span>Cadastrar Nova Categoria</span>
-          </h4>
-          <button type="button" onClick={onClose} className="modal-close-btn">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div
+              style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '12px',
+                background: 'rgba(0, 210, 255, 0.12)',
+                border: '1px solid rgba(0, 210, 255, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--accent-cyan)'
+              }}
+            >
+              <Layers size={18} />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                Cadastrar Nova Categoria
+              </h4>
+              <span style={{ fontSize: '0.76rem', color: '#94a3b8' }}>
+                Atalho direto no formulário da peça
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="drawer-close-btn" title="Fechar">
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="checkout-alert-error p-2 mb-3 text-xs rounded">
+          <div className="checkout-alert-error p-3 mb-4 text-xs rounded-xl" style={{ borderRadius: '12px' }}>
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <div className="form-field">
-            <label className="text-xs font-semibold text-main block mb-1">
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9', display: 'block', marginBottom: '0.4rem' }}>
               Nome da Categoria *
             </label>
             <input
@@ -107,15 +157,23 @@ export function QuickCategoryModal({ isOpen, onClose, onCategoryCreated }) {
               placeholder="Ex: Escapamentos & Catalisadores"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full text-xs"
+              style={{
+                width: '100%',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                background: '#090f1a',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: '#fff',
+                fontSize: '0.88rem'
+              }}
             />
           </div>
 
           <div className="form-field">
-            <label className="text-xs font-semibold text-main block mb-2">
+            <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9', display: 'block', marginBottom: '0.6rem' }}>
               Selecione o Ícone
             </label>
-            <div className="icon-selector-grid">
+            <div className="icon-selector-grid" style={{ gap: '0.5rem' }}>
               {QUICK_ICONS.map((item) => {
                 const Comp = item.Component;
                 const isSelected = icon === item.id;
@@ -126,28 +184,66 @@ export function QuickCategoryModal({ isOpen, onClose, onCategoryCreated }) {
                     onClick={() => setIcon(item.id)}
                     className={`icon-select-btn ${isSelected ? 'active' : ''}`}
                     title={item.label}
+                    style={{
+                      borderRadius: '12px',
+                      padding: '0.65rem 0.4rem',
+                      background: isSelected ? 'rgba(0, 210, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                      borderColor: isSelected ? '#00d2ff' : 'rgba(255, 255, 255, 0.08)'
+                    }}
                   >
-                    <Comp size={16} />
-                    <span className="icon-select-label">{item.label.split(' ')[0]}</span>
+                    <Comp size={18} className={isSelected ? 'text-cyan' : 'text-muted'} />
+                    <span className="icon-select-label" style={{ fontSize: '0.72rem', marginTop: '0.2rem' }}>
+                      {item.label.split(' ')[0]}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex-center gap-2 justify-end pt-3 border-top mt-4">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              gap: '0.85rem',
+              paddingTop: '1.25rem',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              marginTop: '0.5rem'
+            }}
+          >
             <button
               type="button"
               onClick={onClose}
-              className="btn btn-secondary btn-sm"
+              style={{
+                padding: '0.65rem 1.4rem',
+                borderRadius: '9999px',
+                fontSize: '0.85rem',
+                fontWeight: 600,
+                background: 'rgba(255, 255, 255, 0.06)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
+                color: '#cbd5e1',
+                cursor: 'pointer'
+              }}
+              className="hover-lift"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="btn btn-primary btn-sm flex-center gap-1"
+              style={{
+                padding: '0.65rem 1.6rem',
+                borderRadius: '9999px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem'
+              }}
+              className="btn btn-primary hover-lift"
             >
-              <Plus size={14} />
+              <Plus size={15} />
               <span>Salvar e Selecionar</span>
             </button>
           </div>
@@ -155,4 +251,7 @@ export function QuickCategoryModal({ isOpen, onClose, onCategoryCreated }) {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }
+

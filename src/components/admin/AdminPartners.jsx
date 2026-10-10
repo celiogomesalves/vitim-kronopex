@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Briefcase,
   CheckCircle2,
@@ -568,33 +569,99 @@ export function AdminPartners({
         </div>
       )}
 
-      {/* Modal de Aprovação de Solicitação */}
-      {approvingReq && (
-        <div className="modal-backdrop animate-fade-in" onClick={() => setApprovingReq(null)}>
+      {/* Modal de Aprovação de Solicitação via Portal */}
+      {approvingReq && typeof document !== 'undefined' && createPortal(
+        <div
+          className="modal-backdrop-portal"
+          onClick={() => setApprovingReq(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(3, 7, 18, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            overflowY: 'auto'
+          }}
+        >
           <div
-            className="modal-dialog admin-approve-dialog glass-panel p-6"
+            className="admin-approve-dialog"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '520px', width: '92%' }}
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#0d1524',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px',
+              padding: '2.25rem',
+              boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+              position: 'relative',
+              margin: 'auto'
+            }}
           >
-            <div className="modal-header flex-between mb-4">
-              <h3 className="font-bold text-base flex-center gap-2">
-                <CheckCircle2 size={20} className="text-cyan" />
-                <span>Aprovar Credenciamento de Parceiro</span>
-              </h3>
-              <button onClick={() => setApprovingReq(null)} className="modal-close-btn">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '14px',
+                    background: 'rgba(0, 210, 255, 0.12)',
+                    border: '1px solid rgba(0, 210, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#00d2ff'
+                  }}
+                >
+                  <CheckCircle2 size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    Aprovar Credenciamento de Parceiro
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.2rem 0 0 0' }}>
+                    Defina a taxa de comissão e homologue a loja
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setApprovingReq(null)}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+              >
                 ✕
               </button>
             </div>
 
             <form onSubmit={handleConfirmApprove}>
-              <div className="p-4 rounded bg-surface mb-4 space-y-2 text-xs">
-                <div><span className="text-dim">Empresa:</span> <strong className="text-main">{approvingReq.companyName}</strong></div>
-                <div><span className="text-dim">CNPJ:</span> <span className="font-mono text-muted">{formatCNPJ(approvingReq.cnpj)}</span></div>
-                <div><span className="text-dim">Contato:</span> <strong className="text-main">{approvingReq.contactName} ({formatPhone(approvingReq.phone)})</strong></div>
+              <div style={{ padding: '1rem 1.25rem', borderRadius: '16px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <div><span style={{ color: '#94a3b8' }}>Empresa:</span> <strong style={{ color: '#ffffff', marginLeft: '0.4rem' }}>{approvingReq.companyName}</strong></div>
+                <div><span style={{ color: '#94a3b8' }}>CNPJ:</span> <span style={{ fontFamily: 'monospace', color: '#00d2ff', marginLeft: '0.4rem' }}>{formatCNPJ(approvingReq.cnpj)}</span></div>
+                <div><span style={{ color: '#94a3b8' }}>Contato:</span> <strong style={{ color: '#ffffff', marginLeft: '0.4rem' }}>{approvingReq.contactName} ({formatPhone(approvingReq.phone)})</strong></div>
               </div>
 
-              <div className="form-field mb-4">
-                <label className="text-xs font-semibold text-main block mb-1">
+              <div className="form-field" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
                   Taxa de Comissão KronoPex (%) *
                 </label>
                 <input
@@ -605,39 +672,76 @@ export function AdminPartners({
                   required
                   value={commissionInput}
                   onChange={(e) => setCommissionInput(e.target.value)}
-                  className="admin-input-lg w-full"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
-                <span className="text-xs text-muted block mt-1">
+                <span style={{ display: 'block', fontSize: '0.78rem', color: '#94a3b8', marginTop: '0.35rem' }}>
                   Percentual retido pela KronoPex sobre o valor de cada peça vendida na loja.
                 </span>
               </div>
 
-              <div className="whatsapp-approval-banner p-3 rounded mb-4 flex-center gap-3">
-                <MessageCircle size={22} className="text-green flex-shrink-0" />
-                <div className="text-xs">
-                  <strong className="text-main block">Notificação via WhatsApp</strong>
-                  <span className="text-muted">
+              <div style={{ padding: '1rem 1.25rem', borderRadius: '16px', background: 'rgba(16, 185, 129, 0.08)', border: '1px solid rgba(16, 185, 129, 0.25)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <MessageCircle size={24} style={{ color: '#10b981', flexShrink: 0 }} />
+                <div style={{ fontSize: '0.8rem' }}>
+                  <strong style={{ display: 'block', color: '#ffffff' }}>Notificação via WhatsApp</strong>
+                  <span style={{ color: '#94a3b8' }}>
                     Ao aprovar, você poderá enviar uma mensagem automática no WhatsApp com os dados de acesso e comissão acordada.
                   </span>
                 </div>
               </div>
 
-              <div className="flex-center gap-3 justify-end pt-3 border-top">
+              {/* Botões Pill hu169yr */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
                 <button
                   type="button"
                   onClick={() => setApprovingReq(null)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.75rem 1.75rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary flex-center gap-2">
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: '9999px',
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(16, 185, 129, 0.35)',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s'
+                  }}
+                >
                   <CheckCircle2 size={16} />
                   <span>Aprovar & Homologar</span>
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Confirmação Universal */}

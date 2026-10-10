@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Users,
   Shield,
@@ -445,59 +446,160 @@ export function AdminUsers({
         </div>
       )}
 
-      {/* Modal Adicionar / Editar Membro da Equipe */}
-      {isStaffModalOpen && (
-        <div className="modal-backdrop animate-fade-in" onClick={() => setIsStaffModalOpen(false)}>
+      {/* Modal Adicionar / Editar Membro da Equipe via Portal */}
+      {isStaffModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="modal-backdrop-portal"
+          onClick={() => setIsStaffModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(3, 7, 18, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            overflowY: 'auto'
+          }}
+        >
           <div
-            className="modal-dialog admin-user-dialog glass-panel"
+            className="admin-user-dialog"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '580px', width: '92%' }}
+            style={{
+              width: '100%',
+              maxWidth: '620px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#0d1524',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px',
+              padding: '2.25rem',
+              boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+              position: 'relative',
+              margin: 'auto'
+            }}
           >
-            <div className="modal-header flex-between mb-4">
-              <h3 className="font-bold text-base flex-center gap-2">
-                <Shield size={18} className="text-cyan" />
-                <span>{editingStaff ? 'Editar Membro da Equipe' : 'Cadastrar Novo Colaborador'}</span>
-              </h3>
-              <button onClick={() => setIsStaffModalOpen(false)} className="modal-close-btn">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '14px',
+                    background: 'rgba(0, 210, 255, 0.12)',
+                    border: '1px solid rgba(0, 210, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#00d2ff'
+                  }}
+                >
+                  <Shield size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    {editingStaff ? 'Editar Membro da Equipe' : 'Cadastrar Novo Colaborador'}
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.2rem 0 0 0' }}>
+                    Defina o perfil de acesso e atribuições operacionais
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsStaffModalOpen(false)}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+              >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleStaffSubmit} className="admin-form-grid">
-              <div className="form-field full-width mb-3">
-                <label>Nome Completo *</label>
+            <form onSubmit={handleStaffSubmit} className="admin-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Nome Completo *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Carlos Eduardo Silva"
                   value={staffForm.name}
                   onChange={(e) => setStaffForm({ ...staffForm, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field mb-3">
-                <label>E-mail Corporativo *</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  E-mail Corporativo *
+                </label>
                 <input
                   type="email"
                   required
                   placeholder="exemplo@kronopex.com.br"
                   value={staffForm.email}
                   onChange={(e) => setStaffForm({ ...staffForm, email: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field mb-3">
-                <label>Telefone / WhatsApp</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Telefone / WhatsApp
+                </label>
                 <input
                   type="text"
                   placeholder="(11) 98765-4321"
                   value={staffForm.phone}
                   onChange={(e) => setStaffForm({ ...staffForm, phone: formatPhone(e.target.value) })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field full-width mb-4">
-                <label>Função Base (Cargo)</label>
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Função Base (Cargo)
+                </label>
                 <select
                   value={staffForm.role}
                   onChange={(e) => {
@@ -512,6 +614,15 @@ export function AdminUsers({
                         : ['manage_orders']
                     });
                   }}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: '#0b1322',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 >
                   <option value="admin">Administrador Master (Acesso Total)</option>
                   <option value="manager">Gerente de Loja & Catálogo</option>
@@ -520,9 +631,11 @@ export function AdminUsers({
               </div>
 
               {staffForm.role !== 'admin' && (
-                <div className="form-field full-width mb-4">
-                  <label className="block mb-2 font-semibold">Permissões Granulares Específicas</label>
-                  <div className="permissions-checklist-grid">
+                <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                  <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.65rem' }}>
+                    Permissões Granulares Específicas
+                  </label>
+                  <div className="permissions-checklist-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(1, 1fr)', gap: '0.75rem' }}>
                     {PERMISSION_OPTIONS.map((perm) => {
                       const isChecked = staffForm.permissions.includes(perm.id);
                       const Icon = perm.icon;
@@ -531,19 +644,30 @@ export function AdminUsers({
                           key={perm.id}
                           className={`perm-checkbox-card ${isChecked ? 'active' : ''}`}
                           onClick={() => handleTogglePermission(perm.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.85rem',
+                            padding: '0.85rem 1.15rem',
+                            borderRadius: '14px',
+                            background: isChecked ? 'rgba(0, 210, 255, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                            border: isChecked ? '1px solid rgba(0, 210, 255, 0.35)' : '1px solid rgba(255, 255, 255, 0.08)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s'
+                          }}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => {}}
-                            className="perm-checkbox"
+                            style={{ width: '18px', height: '18px', accentColor: '#00d2ff', flexShrink: 0 }}
                           />
                           <div className="perm-info">
-                            <span className="perm-label flex-center gap-1">
-                              <Icon size={14} className="text-cyan" />
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#ffffff', fontSize: '0.9rem' }}>
+                              <Icon size={16} className="text-cyan" />
                               <strong>{perm.label}</strong>
                             </span>
-                            <span className="perm-desc text-xs text-muted block">{perm.desc}</span>
+                            <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginTop: '0.15rem' }}>{perm.desc}</span>
                           </div>
                         </div>
                       );
@@ -552,52 +676,157 @@ export function AdminUsers({
                 </div>
               )}
 
-              <div className="full-width flex-center gap-3 justify-end pt-3 border-top">
+              {/* Botões Pill hu169yr */}
+              <div
+                className="full-width"
+                style={{
+                  gridColumn: 'span 2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '1rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsStaffModalOpen(false)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.75rem 1.75rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: '9999px',
+                    background: 'linear-gradient(135deg, #00d2ff 0%, #0077ff 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(0, 210, 255, 0.35)',
+                    transition: 'all 0.2s'
+                  }}
+                >
                   {editingStaff ? 'Salvar Alterações' : 'Cadastrar Colaborador'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {/* Modal Permissões do Fornecedor */}
-      {isPartnerPermModalOpen && editingPartner && (
-        <div className="modal-backdrop animate-fade-in" onClick={() => setIsPartnerPermModalOpen(false)}>
+      {/* Modal Permissões do Fornecedor via Portal */}
+      {isPartnerPermModalOpen && editingPartner && typeof document !== 'undefined' && createPortal(
+        <div
+          className="modal-backdrop-portal"
+          onClick={() => setIsPartnerPermModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(3, 7, 18, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            overflowY: 'auto'
+          }}
+        >
           <div
-            className="modal-dialog admin-user-dialog glass-panel"
+            className="admin-user-dialog"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '520px', width: '92%' }}
+            style={{
+              width: '100%',
+              maxWidth: '560px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#0d1524',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px',
+              padding: '2.25rem',
+              boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+              position: 'relative',
+              margin: 'auto'
+            }}
           >
-            <div className="modal-header flex-between mb-4">
-              <h3 className="font-bold text-base flex-center gap-2">
-                <Building2 size={18} className="text-cyan" />
-                <span>Regras de Acesso: {editingPartner.tradeName}</span>
-              </h3>
-              <button onClick={() => setIsPartnerPermModalOpen(false)} className="modal-close-btn">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '14px',
+                    background: 'rgba(0, 210, 255, 0.12)',
+                    border: '1px solid rgba(0, 210, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#00d2ff'
+                  }}
+                >
+                  <Building2 size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    Regras de Acesso: {editingPartner.tradeName}
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.2rem 0 0 0' }}>
+                    Parâmetros de comissão e autonomia no catálogo
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsPartnerPermModalOpen(false)}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+              >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handlePartnerPermSubmit} className="admin-form-grid">
-              <div className="form-field full-width mb-3">
-                <label className="text-xs text-muted block mb-1">Empresa / CNPJ</label>
-                <div className="p-3 rounded bg-surface">
-                  <strong className="block text-main">{editingPartner.companyName}</strong>
-                  <span className="text-xs font-mono text-muted">{formatCNPJ(editingPartner.cnpj)}</span>
+            <form onSubmit={handlePartnerPermSubmit} className="admin-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.35rem' }}>Empresa / CNPJ</label>
+                <div style={{ padding: '0.85rem 1.15rem', borderRadius: '14px', background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                  <strong style={{ display: 'block', color: '#ffffff', fontSize: '0.95rem' }}>{editingPartner.companyName}</strong>
+                  <span style={{ fontSize: '0.8rem', fontFamily: 'monospace', color: '#94a3b8' }}>{formatCNPJ(editingPartner.cnpj)}</span>
                 </div>
               </div>
 
-              <div className="form-field mb-3">
-                <label>Taxa de Comissão KronoPex (%)</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Taxa de Comissão KronoPex (%)
+                </label>
                 <input
                   type="number"
                   min="0"
@@ -605,73 +834,133 @@ export function AdminUsers({
                   step="0.5"
                   value={partnerPermForm.commissionRate}
                   onChange={(e) => setPartnerPermForm({ ...partnerPermForm, commissionRate: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field mb-3">
-                <label>Status de Homologação</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Status de Homologação
+                </label>
                 <select
                   value={partnerPermForm.status}
                   onChange={(e) => setPartnerPermForm({ ...partnerPermForm, status: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: '#0b1322',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 >
                   <option value="active">Ativo (Permite operar)</option>
                   <option value="suspended">Suspenso (Bloqueado)</option>
                 </select>
               </div>
 
-              <div className="form-field full-width mb-3 space-y-3">
-                <label className="flex-center gap-3 p-3 rounded bg-surface cursor-pointer">
+              <div className="form-field full-width" style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.85rem 1.15rem', borderRadius: '14px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={partnerPermForm.canUploadProducts}
                     onChange={(e) => setPartnerPermForm({ ...partnerPermForm, canUploadProducts: e.target.checked })}
+                    style={{ width: '18px', height: '18px', accentColor: '#00d2ff', flexShrink: 0 }}
                   />
                   <div>
-                    <strong className="block text-xs text-main">Permitir Cadastro de Peças no Portal</strong>
-                    <span className="text-xs text-muted">O parceiro pode submeter produtos pelo seu painel exclusivo</span>
+                    <strong style={{ display: 'block', fontSize: '0.85rem', color: '#ffffff' }}>Permitir Cadastro de Peças no Portal</strong>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>O parceiro pode submeter produtos pelo seu painel exclusivo</span>
                   </div>
                 </label>
 
-                <label className="flex-center gap-3 p-3 rounded bg-surface cursor-pointer">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.85rem 1.15rem', borderRadius: '14px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={partnerPermForm.requiresApproval}
                     onChange={(e) => setPartnerPermForm({ ...partnerPermForm, requiresApproval: e.target.checked })}
+                    style={{ width: '18px', height: '18px', accentColor: '#00d2ff', flexShrink: 0 }}
                   />
                   <div>
-                    <strong className="block text-xs text-warning">Exigir Aprovação Prévia do Administrador</strong>
-                    <span className="text-xs text-muted">Cada produto cadastrado só vai para a vitrine após o admin aprovar</span>
+                    <strong style={{ display: 'block', fontSize: '0.85rem', color: '#f59e0b' }}>Exigir Aprovação Prévia do Administrador</strong>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Cada produto cadastrado só vai para a vitrine após o admin aprovar</span>
                   </div>
                 </label>
 
-                <label className="flex-center gap-3 p-3 rounded bg-surface cursor-pointer">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', padding: '0.85rem 1.15rem', borderRadius: '14px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.08)', cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={partnerPermForm.canViewReports}
                     onChange={(e) => setPartnerPermForm({ ...partnerPermForm, canViewReports: e.target.checked })}
+                    style={{ width: '18px', height: '18px', accentColor: '#00d2ff', flexShrink: 0 }}
                   />
                   <div>
-                    <strong className="block text-xs text-main">Acesso a Extrato & Repasses Financeiros</strong>
-                    <span className="text-xs text-muted">Exibe métricas de vendas e valores a liquidar via PIX</span>
+                    <strong style={{ display: 'block', fontSize: '0.85rem', color: '#ffffff' }}>Acesso a Extrato & Repasses Financeiros</strong>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Exibe métricas de vendas e valores a liquidar via PIX</span>
                   </div>
                 </label>
               </div>
 
-              <div className="full-width flex-center gap-3 justify-end pt-3 border-top">
+              {/* Botões Pill hu169yr */}
+              <div
+                className="full-width"
+                style={{
+                  gridColumn: 'span 2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '1rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsPartnerPermModalOpen(false)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.75rem 1.75rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: '9999px',
+                    background: 'linear-gradient(135deg, #00d2ff 0%, #0077ff 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(0, 210, 255, 0.35)',
+                    transition: 'all 0.2s'
+                  }}
+                >
                   Salvar Regras do Parceiro
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Confirmação Universal */}

@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Plus,
   Search,
@@ -597,45 +598,135 @@ export function AdminProducts({
         </div>
       )}
 
-      {/* Modal Add / Edit Product */}
-      {isModalOpen && (
-        <div className="modal-backdrop animate-fade-in" onClick={() => setIsModalOpen(false)}>
+      {/* Modal Add / Edit Product via Portal */}
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="modal-backdrop-portal"
+          onClick={() => setIsModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(3, 7, 18, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            overflowY: 'auto'
+          }}
+        >
           <div
-            className="modal-dialog admin-product-dialog glass-panel"
+            className="admin-product-dialog"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '640px', width: '92%' }}
+            style={{
+              width: '100%',
+              maxWidth: '680px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#0d1524',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              borderRadius: '24px',
+              padding: '2.25rem',
+              boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+              position: 'relative',
+              margin: 'auto'
+            }}
           >
-            <div className="modal-header flex-between mb-4">
-              <h3 className="font-bold text-base flex-center gap-2">
-                <Package size={18} className="text-cyan" />
-                <span>{editingProduct ? 'Editar Peça' : 'Cadastrar Nova Peça no Estoque'}</span>
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="modal-close-btn">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '14px',
+                    background: 'rgba(0, 210, 255, 0.12)',
+                    border: '1px solid rgba(0, 210, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#00d2ff'
+                  }}
+                >
+                  <Package size={22} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                    {editingProduct ? 'Editar Peça' : 'Cadastrar Nova Peça no Estoque'}
+                  </h3>
+                  <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0.2rem 0 0 0' }}>
+                    Preencha os detalhes técnicos e comerciais da peça
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.06)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  color: '#94a3b8',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                  transition: 'all 0.2s'
+                }}
+              >
                 ✕
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="admin-form-grid">
-              <div className="form-field full-width mb-3">
-                <label>Nome Comercial da Peça *</label>
+            <form onSubmit={handleFormSubmit} className="admin-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem' }}>
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Nome Comercial da Peça *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Jogo de Velas Iridium G-Power"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
               {/* Categoria com Botão de Acesso Rápido */}
-              <div className="form-field mb-3">
-                <div className="flex-between mb-1">
-                  <label>Categoria *</label>
+              <div className="form-field">
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0' }}>Categoria *</label>
                   <button
                     type="button"
                     onClick={() => setIsQuickCatOpen(true)}
                     className="btn-action-badge"
                     title="Adicionar nova categoria rapidamente"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.35rem',
+                      padding: '0.3rem 0.65rem',
+                      borderRadius: '9999px',
+                      background: 'rgba(0, 210, 255, 0.15)',
+                      border: '1px solid rgba(0, 210, 255, 0.35)',
+                      color: '#00d2ff',
+                      fontSize: '0.75rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
                   >
                     <Plus size={12} />
                     <span>+ Nova Categoria</span>
@@ -644,6 +735,15 @@ export function AdminProducts({
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: '#0b1322',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 >
                   {categories.filter((c) => c.id !== 'all').map((c) => (
                     <option key={c.id} value={c.id}>
@@ -653,31 +753,55 @@ export function AdminProducts({
                 </select>
               </div>
 
-              <div className="form-field mb-3">
-                <label>Marca / Fabricante *</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Marca / Fabricante *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Bosch, Cofap, NGK"
                   value={formData.brand}
                   onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field mb-3">
-                <label>Código OEM / Part Number *</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Código OEM / Part Number *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: BKR6EIX-11"
                   value={formData.oemCode}
                   onChange={(e) => setFormData({ ...formData, oemCode: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
               {/* Campo Preço com Máscara Monetária Real pt-BR */}
-              <div className="form-field mb-3">
-                <label>Preço de Venda (R$) *</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Preço de Venda (R$) *
+                </label>
                 <div className="input-currency-group">
                   <span className="currency-prefix">R$</span>
                   <input
@@ -687,79 +811,165 @@ export function AdminProducts({
                     value={priceInputDisplay}
                     onChange={handlePriceChange}
                     className="input-currency"
+                    style={{
+                      borderRadius: '14px',
+                      fontSize: '0.95rem'
+                    }}
                   />
                 </div>
                 {formData.price > 0 && (
-                  <span className="text-xs text-green block mt-1">
+                  <span style={{ display: 'block', fontSize: '0.75rem', color: '#10b981', marginTop: '0.35rem' }}>
                     Preço no PIX (-10%): {formatCurrency(formData.price * 0.9)}
                   </span>
                 )}
               </div>
 
-              <div className="form-field mb-3">
-                <label>Estoque Atual *</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Estoque Atual *
+                </label>
                 <input
                   type="number"
                   required
                   placeholder="10"
                   value={formData.stock}
                   onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field mb-3">
-                <label>Estoque Mínimo de Alerta</label>
+              <div className="form-field">
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Estoque Mínimo de Alerta
+                </label>
                 <input
                   type="number"
                   placeholder="3"
                   value={formData.minStock}
                   onChange={(e) => setFormData({ ...formData, minStock: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
-              <div className="form-field full-width mb-3">
-                <label>Veículos Compatíveis (Separados por vírgula)</label>
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Veículos Compatíveis (Separados por vírgula)
+                </label>
                 <input
                   type="text"
                   placeholder="Ex: Gol G5/G6, Fox 1.6, Voyage 1.6"
                   value={formData.vehicles}
                   onChange={(e) => setFormData({ ...formData, vehicles: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem'
+                  }}
                 />
               </div>
 
               {/* Upload e Galeria de Imagens */}
-              <div className="form-field full-width mb-3">
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
                 <ImageUploadSelector
                   value={formData.image}
                   onChange={(img) => setFormData({ ...formData, image: img })}
                 />
               </div>
 
-              <div className="form-field full-width mb-4">
-                <label>Descrição Técnica</label>
+              <div className="form-field full-width" style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: '#e2e8f0', marginBottom: '0.45rem' }}>
+                  Descrição Técnica
+                </label>
                 <textarea
                   rows={3}
                   placeholder="Detalhes, especificações e diferenciais da peça..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem 1.15rem',
+                    borderRadius: '14px',
+                    background: 'rgba(15, 23, 42, 0.75)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#ffffff',
+                    fontSize: '0.95rem',
+                    resize: 'vertical'
+                  }}
                 />
               </div>
 
-              <div className="full-width flex-center gap-3 justify-end pt-3 border-top">
+              {/* Ações com botões em formato de Pílula (hu169yr) */}
+              <div
+                className="full-width"
+                style={{
+                  gridColumn: 'span 2',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '1rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.75rem 1.75rem',
+                    borderRadius: '9999px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    color: '#e2e8f0',
+                    fontSize: '0.9rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.75rem 2rem',
+                    borderRadius: '9999px',
+                    background: 'linear-gradient(135deg, #00d2ff 0%, #0077ff 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(0, 210, 255, 0.35)',
+                    transition: 'all 0.2s'
+                  }}
+                >
                   {editingProduct ? 'Salvar Alterações' : 'Cadastrar Peça'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Rápido de Criação de Categoria sem sair da tela */}

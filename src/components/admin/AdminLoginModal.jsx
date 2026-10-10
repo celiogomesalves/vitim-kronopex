@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Shield, Lock, UserCheck, Sparkles, ArrowRight } from 'lucide-react';
 import { INITIAL_STAFF } from '../../data/mockUsers';
 import { AppwriteService } from '../../services/appwrite';
@@ -52,13 +53,42 @@ export function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
     }
   };
 
-  return (
-    <div className="modal-backdrop animate-fade-in" onClick={onClose}>
+  const modalContent = (
+    <div
+      className="modal-backdrop-portal"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 999999,
+        backgroundColor: 'rgba(3, 7, 18, 0.85)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1.5rem',
+        overflowY: 'auto'
+      }}
+    >
       <div
-        className="modal-dialog login-modal-dialog glass-panel"
+        className="modal-dialog login-modal-dialog"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: '480px',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          background: '#0d1524',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '24px',
+          padding: '2.25rem',
+          boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+          position: 'relative',
+          margin: 'auto'
+        }}
       >
-        <div className="login-modal-header flex-between">
+        <div className="login-modal-header flex-between mb-4">
           <div className="flex-center gap-2">
             <div className="login-badge-icon">
               <Shield size={20} className="text-cyan" />
@@ -182,7 +212,15 @@ export function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
             />
           </div>
 
-          <button type="submit" className="btn btn-primary w-full btn-sm flex-center gap-2">
+          <button
+            type="submit"
+            className="btn btn-primary w-full flex-center gap-2"
+            style={{
+              padding: '0.85rem 1.5rem',
+              borderRadius: '9999px',
+              fontWeight: 700
+            }}
+          >
             <UserCheck size={16} />
             <span>Entrar no Sistema</span>
           </button>
@@ -190,4 +228,6 @@ export function AdminLoginModal({ isOpen, onClose, onLoginSuccess }) {
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

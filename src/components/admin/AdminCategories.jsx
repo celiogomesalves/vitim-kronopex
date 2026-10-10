@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Layers,
   Plus,
@@ -13,7 +14,8 @@ import {
   Sparkles,
   Package,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 
@@ -214,54 +216,132 @@ export function AdminCategories({
         })}
       </div>
 
-      {/* Modal Add / Edit Categoria */}
-      {isModalOpen && (
-        <div className="modal-backdrop animate-fade-in" onClick={() => setIsModalOpen(false)}>
+      {/* Modal Add / Edit Categoria via Portal */}
+      {isModalOpen && typeof document !== 'undefined' && createPortal(
+        <div
+          className="modal-backdrop-portal"
+          onClick={() => setIsModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999999,
+            backgroundColor: 'rgba(3, 7, 18, 0.85)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            overflowY: 'auto'
+          }}
+        >
           <div
-            className="modal-dialog admin-category-dialog glass-panel"
+            className="admin-category-dialog"
             onClick={(e) => e.stopPropagation()}
-            style={{ maxWidth: '480px', width: '92%' }}
+            style={{
+              width: '100%',
+              maxWidth: '520px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#0d1524',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '24px',
+              padding: '2.25rem',
+              boxShadow: '0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(0, 210, 255, 0.12)',
+              position: 'relative',
+              margin: 'auto'
+            }}
           >
-            <div className="modal-header flex-between mb-4">
-              <h3 className="font-bold text-base flex-center gap-2">
-                <Layers size={18} className="text-cyan" />
-                <span>{editingCategory ? 'Editar Categoria' : 'Cadastrar Nova Categoria'}</span>
-              </h3>
-              <button onClick={() => setIsModalOpen(false)} className="modal-close-btn">
-                ✕
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '12px',
+                    background: 'rgba(0, 210, 255, 0.12)',
+                    border: '1px solid rgba(0, 210, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'var(--accent-cyan)'
+                  }}
+                >
+                  <Layers size={20} />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff', margin: 0 }}>
+                    {editingCategory ? 'Editar Categoria' : 'Cadastrar Nova Categoria'}
+                  </h3>
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    Organize as prateleiras da KronoPex
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="drawer-close-btn"
+                title="Fechar"
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="admin-form-grid">
-              <div className="form-field full-width mb-3">
-                <label>Nome da Categoria *</label>
+            <form onSubmit={handleFormSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className="form-field full-width">
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9', display: 'block', marginBottom: '0.4rem' }}>
+                  Nome da Categoria *
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="Ex: Ar-Condicionado & Climatização"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '12px',
+                    background: '#090f1a',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#fff',
+                    fontSize: '0.88rem'
+                  }}
                 />
               </div>
 
               {!editingCategory && (
-                <div className="form-field full-width mb-3">
-                  <label>Identificador Único (Slug opcional)</label>
+                <div className="form-field full-width">
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9', display: 'block', marginBottom: '0.4rem' }}>
+                    Identificador Único (Slug opcional)
+                  </label>
                   <input
                     type="text"
                     placeholder="Ex: ar-condicionado (deixe vazio para gerar auto)"
                     value={formData.id}
                     onChange={(e) => setFormData({ ...formData, id: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px',
+                      background: '#090f1a',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
+                      color: '#fff',
+                      fontSize: '0.88rem'
+                    }}
                   />
-                  <span className="text-xs text-dim block mt-1">
+                  <span style={{ fontSize: '0.74rem', color: '#64748b', display: 'block', marginTop: '0.3rem' }}>
                     Será usado no filtro de busca e rotas.
                   </span>
                 </div>
               )}
 
-              <div className="form-field full-width mb-4">
-                <label className="block mb-2">Ícone Visual da Categoria</label>
-                <div className="icon-selector-grid">
+              <div className="form-field full-width">
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#f1f5f9', display: 'block', marginBottom: '0.6rem' }}>
+                  Ícone Visual da Categoria
+                </label>
+                <div className="icon-selector-grid" style={{ gap: '0.6rem' }}>
                   {AVAILABLE_ICONS.map((iconItem) => {
                     const Comp = iconItem.Component;
                     const isSelected = formData.icon === iconItem.id;
@@ -272,30 +352,69 @@ export function AdminCategories({
                         onClick={() => setFormData({ ...formData, icon: iconItem.id })}
                         className={`icon-select-btn ${isSelected ? 'active' : ''}`}
                         title={iconItem.label}
+                        style={{
+                          borderRadius: '12px',
+                          padding: '0.7rem 0.5rem',
+                          background: isSelected ? 'rgba(0, 210, 255, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                          borderColor: isSelected ? '#00d2ff' : 'rgba(255, 255, 255, 0.08)'
+                        }}
                       >
-                        <Comp size={18} />
-                        <span className="icon-select-label">{iconItem.label.split(' ')[0]}</span>
+                        <Comp size={20} className={isSelected ? 'text-cyan' : 'text-muted'} />
+                        <span className="icon-select-label" style={{ fontSize: '0.74rem', marginTop: '0.2rem' }}>
+                          {iconItem.label.split(' ')[0]}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              <div className="full-width flex-center gap-3 justify-end pt-3 border-top">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '0.85rem',
+                  paddingTop: '1.25rem',
+                  borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                  marginTop: '0.5rem'
+                }}
+              >
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="btn btn-secondary"
+                  style={{
+                    padding: '0.65rem 1.4rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    color: '#cbd5e1',
+                    cursor: 'pointer'
+                  }}
+                  className="hover-lift"
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button
+                  type="submit"
+                  style={{
+                    padding: '0.65rem 1.6rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                  className="btn btn-primary hover-lift"
+                >
                   {editingCategory ? 'Salvar Alterações' : 'Cadastrar Categoria'}
                 </button>
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Universal de Confirmação */}
