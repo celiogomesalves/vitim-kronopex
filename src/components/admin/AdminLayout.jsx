@@ -10,7 +10,9 @@ import {
   Store,
   LogOut,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Layers,
+  CreditCard
 } from 'lucide-react';
 import { AdminDashboard } from './AdminDashboard';
 import { AdminProducts } from './AdminProducts';
@@ -19,6 +21,8 @@ import { AdminCouriers } from './AdminCouriers';
 import { AdminPartners } from './AdminPartners';
 import { AdminUsers } from './AdminUsers';
 import { AdminSettings } from './AdminSettings';
+import { AdminCategories } from './AdminCategories';
+import { AdminPayments } from './AdminPayments';
 
 export function AdminLayout({
   currentUser,
@@ -26,6 +30,10 @@ export function AdminLayout({
   onBackToStore,
   products,
   onSaveProducts,
+  categories,
+  onSaveCategories,
+  paymentMethods,
+  onSavePaymentMethods,
   orders,
   onSaveOrders,
   couriers,
@@ -43,14 +51,20 @@ export function AdminLayout({
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const canEditProducts = currentUser.role === 'admin' || currentUser.role === 'manager';
-  const canManageCouriers = currentUser.role === 'admin' || currentUser.role === 'manager';
-  const canUpdateOrderStatus = true; // All roles can advance order status
+  const pendingPartnerProductsCount = products.filter((p) => p.partnerId && p.approvalStatus === 'pending').length;
 
   const navItems = [
     { id: 'dashboard', label: 'Painel Geral', icon: LayoutDashboard },
-    { id: 'products', label: 'Estoque & Peças', icon: Package, count: products.filter((p) => p.stock <= p.minStock).length },
+    {
+      id: 'products',
+      label: 'Estoque & Peças',
+      icon: Package,
+      count: pendingPartnerProductsCount > 0 ? pendingPartnerProductsCount : products.filter((p) => p.stock <= p.minStock).length
+    },
+    { id: 'categories', label: 'Categorias & Prateleiras', icon: Layers, adminOnly: true },
     { id: 'orders', label: 'Pedidos & Expedição', icon: ShoppingBag, count: orders.filter((o) => o.status === 'pending').length },
     { id: 'couriers', label: 'KronoPex Delivery', icon: Truck },
+    { id: 'payments', label: 'Formas de Pagamento', icon: CreditCard, adminOnly: true },
     { id: 'partners', label: 'Parceiros & Fornecedores', icon: Briefcase, count: partnerRequests.filter((r) => r.status === 'pending').length, adminOnly: true },
     { id: 'users', label: 'Equipe & Permissões', icon: Users, adminOnly: true },
     { id: 'settings', label: 'Configurações', icon: Settings, adminOnly: true }
@@ -68,7 +82,7 @@ export function AdminLayout({
         </div>
 
         {/* Current Logged User Card */}
-        <div className="admin-user-badge-card glass-panel my-3">
+        <div className="admin-user-badge-card glass-panel my-4 p-3">
           <div className="flex-center gap-3">
             <img
               src={currentUser.avatar}
@@ -133,36 +147,33 @@ export function AdminLayout({
         </div>
       </aside>
 
-      {/* Main Admin Content View */}
+      {/* Main Admin Viewport */}
       <main className="admin-main-viewport">
-        {/* Top bar */}
-        <header className="admin-viewport-topbar glass-panel flex-between px-6 py-3">
+        {/* Top Header Bar */}
+        <header className="admin-viewport-topbar glass-panel flex-between px-6 py-4">
           <div className="flex-center gap-2 text-xs text-muted">
-            <span className="text-cyan font-bold">KronoPex Gestão</span>
+            <span className="text-cyan font-semibold">KronoPex Gestão</span>
             <ChevronRight size={14} />
-            <span className="text-main font-semibold capitalize">{activeTab}</span>
+            <span className="text-main font-bold capitalize">{activeTab}</span>
           </div>
 
-          <div className="flex-center gap-3">
-            <button
-              type="button"
-              onClick={onBackToStore}
-              className="btn btn-secondary btn-xs flex-center gap-1"
-            >
-              <Store size={14} />
-              <span>Ver Vitrine do Cliente</span>
-            </button>
+          <div className="flex-center gap-4">
+            <div className="flex-center gap-2">
+              <span className="status-indicator-live"></span>
+              <span className="text-xs text-muted">Loja Aberta • Entregas Express</span>
+            </div>
           </div>
         </header>
 
-        {/* Active Tab View */}
-        <div className="admin-content-scroll px-6 py-4">
+        {/* View Content Body */}
+        <div className="admin-content-scroll px-6 py-6">
           {activeTab === 'dashboard' && (
             <AdminDashboard
               products={products}
               orders={orders}
               couriers={couriers}
-              onNavigateTab={setActiveTab}
+              partners={partners}
+              onNavigate={(tab) => setActiveTab(tab)}
             />
           )}
 
@@ -170,16 +181,31 @@ export function AdminLayout({
             <AdminProducts
               products={products}
               onSaveProducts={onSaveProducts}
+              categories={categories}
               canEdit={canEditProducts}
+            />
+          )}
+
+          {activeTab === 'categories' && (
+            <AdminCategories
+              categories={categories}
+              onSaveCategories={onSaveCategories}
+              products={products}
+            />
+          )}
+
+          {activeTab === 'payments' && (
+            <AdminPayments
+              paymentMethods={paymentMethods}
+              onSavePaymentMethods={onSavePaymentMethods}
             />
           )}
 
           {activeTab === 'orders' && (
             <AdminOrders
               orders={orders}
-              couriers={couriers}
               onSaveOrders={onSaveOrders}
-              canUpdateStatus={canUpdateOrderStatus}
+              couriers={couriers}
             />
           )}
 
@@ -187,7 +213,7 @@ export function AdminLayout({
             <AdminCouriers
               couriers={couriers}
               onSaveCouriers={onSaveCouriers}
-              canEdit={canManageCouriers}
+              canEdit={currentUser.role === 'admin'}
             />
           )}
 
@@ -206,6 +232,8 @@ export function AdminLayout({
             <AdminUsers
               staff={staff}
               onSaveStaff={onSaveStaff}
+              partners={partners}
+              onSavePartners={onSavePartners}
               currentAdmin={currentUser}
             />
           )}

@@ -1,5 +1,15 @@
 import React from 'react';
-import { X, Trash2, Plus, Minus, ArrowRight, ShoppingBag, Truck, ShieldCheck } from 'lucide-react';
+import {
+  X,
+  Trash2,
+  Plus,
+  Minus,
+  ShoppingBag,
+  ArrowRight,
+  ShieldCheck,
+  Truck
+} from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 
 export function CartDrawer({
   isOpen,
@@ -8,20 +18,29 @@ export function CartDrawer({
   onUpdateQuantity,
   onRemoveItem,
   onProceedToCheckout,
-  freeDeliveryThreshold = 200.00
+  freeDeliveryThreshold = 200
 }) {
   if (!isOpen) return null;
 
+  const totalItemsCount = items.reduce((acc, i) => acc + i.quantity, 0);
+
   const subtotal = items.reduce((acc, item) => {
-    const itemPrice = item.pixDiscountPrice || item.price;
-    return acc + itemPrice * item.quantity;
+    const price = item.pixDiscountPrice || item.price;
+    return acc + price * item.quantity;
   }, 0);
 
-  const missingForFreeDelivery = Math.max(0, freeDeliveryThreshold - subtotal);
-  const deliveryProgress = Math.min(100, (subtotal / freeDeliveryThreshold) * 100);
+  const missingForFreeDelivery = Math.max(
+    0,
+    freeDeliveryThreshold - subtotal
+  );
+
+  const freeDeliveryProgress = Math.min(
+    100,
+    (subtotal / freeDeliveryThreshold) * 100
+  );
 
   return (
-    <div className="cart-backdrop animate-fade-in" onClick={onClose}>
+    <div className="cart-drawer-overlay animate-fade-in" onClick={onClose}>
       <aside
         className="cart-drawer glass-panel"
         onClick={(e) => e.stopPropagation()}
@@ -30,53 +49,60 @@ export function CartDrawer({
         <div className="cart-drawer-header flex-between">
           <div className="flex-center gap-2">
             <ShoppingBag size={20} className="text-cyan" />
-            <h3 className="cart-drawer-title font-bold text-lg">
-              Carrinho de Compras
+            <h3 className="cart-title font-bold text-base">
+              Seu Carrinho de Peças ({totalItemsCount})
             </h3>
-            <span className="cart-items-counter">
-              {items.reduce((acc, i) => acc + i.quantity, 0)} itens
-            </span>
           </div>
           <button
             onClick={onClose}
-            className="cart-close-btn"
-            aria-label="Fechar carrinho"
+            className="drawer-close-btn"
+            title="Fechar carrinho"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Free Delivery Bar */}
-        <div className="delivery-progress-container">
+        {/* Free Shipping Progress Indicator */}
+        <div className="free-shipping-bar-box">
           <div className="flex-between text-xs mb-1">
-            <span className="flex-center gap-1 font-semibold">
+            <span className="flex-center gap-1 text-muted">
               <Truck size={14} className="text-cyan" />
-              {missingForFreeDelivery === 0
-                ? '🎉 Parabéns! Você ganhou Frete Grátis KronoPex'
-                : `Faltam R$ ${missingForFreeDelivery.toFixed(2)} para Frete Grátis`}
+              <span>KronoPex Express Delivery</span>
             </span>
-            <span className="text-muted">{deliveryProgress.toFixed(0)}%</span>
+            <span className="font-semibold text-cyan">
+              {missingForFreeDelivery === 0 ? (
+                'Frete Grátis Liberado!'
+              ) : (
+                `Faltam ${formatCurrency(missingForFreeDelivery)} para Frete Grátis`
+              )}
+            </span>
           </div>
-          <div className="progress-bar-track">
+          <div className="shipping-progress-track">
             <div
-              className="progress-bar-fill"
-              style={{ width: `${deliveryProgress}%` }}
+              className="shipping-progress-fill"
+              style={{ width: `${freeDeliveryProgress}%` }}
             />
           </div>
         </div>
 
-        {/* Items List */}
+        {/* Cart Item List */}
         <div className="cart-items-scroll">
           {items.length === 0 ? (
-            <div className="empty-cart-state text-center">
-              <div className="empty-cart-icon">
-                <ShoppingBag size={48} className="text-muted" />
+            <div className="cart-empty-state text-center py-12">
+              <div className="empty-icon-box mx-auto mb-3">
+                <ShoppingBag size={40} className="text-muted" />
               </div>
-              <h4 className="font-bold text-base mb-1">Seu carrinho está vazio</h4>
-              <p className="text-xs text-muted mb-4">
-                Explore nossa vitrine de peças automotivas e adicione os itens compatíveis com o seu veículo.
+              <h4 className="font-bold text-base text-main mb-1">
+                Carrinho Vazio
+              </h4>
+              <p className="text-xs text-muted max-w-xs mx-auto mb-4">
+                Explore as prateleiras da KronoPex e adicione peças compatíveis com seu veículo.
               </p>
-              <button onClick={onClose} className="btn btn-secondary text-sm">
+              <button
+                type="button"
+                onClick={onClose}
+                className="btn btn-secondary btn-sm"
+              >
                 Voltar à Vitrine
               </button>
             </div>
@@ -94,10 +120,10 @@ export function CartDrawer({
                     <span className="cart-item-brand">{item.brand}</span>
                     <h5 className="cart-item-name">{item.name}</h5>
                     <div className="cart-item-price">
-                      R$ {(unitPrice * item.quantity).toFixed(2)}
+                      {formatCurrency(unitPrice * item.quantity)}
                       {item.quantity > 1 && (
                         <span className="cart-unit-price text-muted">
-                          (R$ {unitPrice.toFixed(2)} cada)
+                          ({formatCurrency(unitPrice)} cada)
                         </span>
                       )}
                     </div>
@@ -143,7 +169,7 @@ export function CartDrawer({
             <div className="cart-summary-lines">
               <div className="flex-between text-sm text-muted">
                 <span>Subtotal</span>
-                <span>R$ {subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex-between text-sm text-muted">
                 <span>Entrega KronoPex Delivery</span>
@@ -157,8 +183,8 @@ export function CartDrawer({
               </div>
               <div className="flex-between text-base font-bold text-main mt-2 pt-2 border-top">
                 <span>Total Estimado (PIX):</span>
-                <span className="text-gradient-cyan text-lg">
-                  R$ {subtotal.toFixed(2)}
+                <span className="text-cyan text-lg">
+                  {formatCurrency(subtotal)}
                 </span>
               </div>
             </div>

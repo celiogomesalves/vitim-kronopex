@@ -11,6 +11,7 @@ import {
   MapPin,
   Clock
 } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 
 export function OrderSuccessModal({ order, onClose, config }) {
   const [copiedPix, setCopiedPix] = useState(false);
@@ -111,7 +112,7 @@ export function OrderSuccessModal({ order, onClose, config }) {
               </div>
 
               <p className="text-xs text-muted mb-3">
-                Transfira o valor exato de <strong>R$ {order.total.toFixed(2)}</strong> para confirmar o despacho do motoboy:
+                Transfira o valor exato de <strong>{formatCurrency(order.total)}</strong> para confirmar o despacho do motoboy:
               </p>
 
               <div className="pix-copy-input-row flex-between">

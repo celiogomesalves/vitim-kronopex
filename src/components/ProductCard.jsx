@@ -1,5 +1,6 @@
 import React from 'react';
 import { ZoomIn, ShoppingBag, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 
 export function ProductCard({
   product,
@@ -91,32 +92,32 @@ export function ProductCard({
           <div className="price-pix-row">
             <span className="price-pix-label">À vista PIX:</span>
             <span className="price-pix-value">
-              R$ {product.pixDiscountPrice ? product.pixDiscountPrice.toFixed(2) : (product.price * 0.9).toFixed(2)}
+              {formatCurrency(product.pixDiscountPrice || product.price * 0.9)}
             </span>
           </div>
           <div className="price-regular-row text-xs text-muted">
-            ou R$ {product.price.toFixed(2)} cartão
+            ou {formatCurrency(product.price)} no cartão
           </div>
         </div>
 
         {/* Action Button */}
-        <div className="product-card-actions">
-          <button
-            type="button"
-            disabled={isOutOfStock}
-            onClick={() => onAddToCart(product)}
-            className={`btn w-full ${cartQuantity > 0 ? 'btn-secondary' : 'btn-primary'} flex-center gap-2`}
-          >
-            <ShoppingBag size={16} />
-            <span>
-              {isOutOfStock
-                ? 'Indisponível'
-                : cartQuantity > 0
-                ? `No Carrinho (${cartQuantity})`
-                : 'Comprar'}
-            </span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => onAddToCart(product)}
+          disabled={isOutOfStock}
+          className={`btn w-full btn-sm flex-center gap-2 mt-3 ${
+            cartQuantity > 0 ? 'btn-secondary' : 'btn-primary'
+          }`}
+        >
+          <ShoppingBag size={15} />
+          <span>
+            {isOutOfStock
+              ? 'Indisponível'
+              : cartQuantity > 0
+              ? `Adicionar Mais (${cartQuantity})`
+              : 'Comprar Agora'}
+          </span>
+        </button>
       </div>
     </div>
   );

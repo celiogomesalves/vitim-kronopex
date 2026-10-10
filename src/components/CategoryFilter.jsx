@@ -7,9 +7,10 @@ import {
   Zap,
   Droplets,
   Sparkles,
+  Package,
   Layers
 } from 'lucide-react';
-import { INITIAL_CATEGORIES } from '../data/mockProducts';
+import { StorageService } from '../services/storage';
 
 const ICON_MAP = {
   Wrench,
@@ -18,18 +19,23 @@ const ICON_MAP = {
   ShieldAlert,
   Zap,
   Droplets,
-  Sparkles
+  Sparkles,
+  Package,
+  Layers
 };
 
 export function CategoryFilter({
   selectedCategory,
   onSelectCategory,
-  productCounts = {}
+  productCounts = {},
+  categories = []
 }) {
+  const activeCategories = categories.length > 0 ? categories : StorageService.getCategories();
+
   return (
     <div className="category-filter-wrapper">
       <div className="container">
-        <div className="shelf-header-row flex-between">
+        <div className="shelf-header-row flex-between mb-4">
           <div className="flex-center gap-2">
             <Layers size={20} className="text-cyan" />
             <h2 className="shelf-title text-lg font-bold">
@@ -42,7 +48,7 @@ export function CategoryFilter({
         </div>
 
         <div className="categories-scroll-row">
-          {INITIAL_CATEGORIES.map((cat) => {
+          {activeCategories.map((cat) => {
             const IconComponent = ICON_MAP[cat.icon] || Wrench;
             const isSelected = selectedCategory === cat.id;
             const count = productCounts[cat.id] ?? 0;

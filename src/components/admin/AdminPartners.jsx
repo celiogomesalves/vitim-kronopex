@@ -17,6 +17,8 @@ import {
   Layers,
   ArrowUpRight
 } from 'lucide-react';
+import { ConfirmationModal } from '../common/ConfirmationModal';
+import { formatCurrency, formatPhone, formatCNPJ, formatDate } from '../../utils/formatters';
 
 export function AdminPartners({
   partners,
@@ -24,7 +26,7 @@ export function AdminPartners({
   onApprovePartner,
   onRejectPartner,
   onSavePartners,
-  orders
+  orders = []
 }) {
   const [activeTab, setActiveTab] = useState('requests'); // 'requests' | 'active' | 'financial'
   const [approvingReq, setApprovingReq] = useState(null);
@@ -32,9 +34,19 @@ export function AdminPartners({
   const [editingCommissionId, setEditingCommissionId] = useState(null);
   const [tempCommission, setTempCommission] = useState('');
 
+  // Confirmações
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    actionType: '',
+    payload: null,
+    variant: 'danger'
+  });
+
   const pendingRequests = partnerRequests.filter((r) => r.status === 'pending');
 
-  // Marketplace financial calculations
+  // Cálculos financeiros do marketplace
   const totalPartnerGmv = partners.reduce((acc, p) => acc + (p.metrics?.totalSold || 0), 0);
   const totalCommissionEarned = partners.reduce((acc, p) => acc + (p.metrics?.commissionRetained || 0), 0);
   const totalPayoutDue = partners.reduce((acc, p) => acc + (p.metrics?.payoutDue || 0), 0);
@@ -48,40 +60,85 @@ export function AdminPartners({
     e.preventDefault();
     if (!approvingReq) return;
 
-    const rate = parseFloat(commissionInput) || 12;
-    onApprovePartner(approvingReq.id, rate);
-    setApprovingReq(null);
+    setConfirmModal({
+      isOpen: true,
+      title: 'Aprovar Parceria Homologada',
+      message: `Deseja aprovar "${approvingReq.companyName}" com comissão de ${commissionInput}% retida pela KronoPex? O fornecedor receberá acesso ao portal para anunciar suas peças.`,
+      actionType: 'approve_req',
+      payload: { id: approvingReq.id, rate: parseFloat(commissionInput) || 12 },
+      variant: 'primary'
+    });
   };
 
-  const handleUpdateCommission = (partnerId) => {
+  const handlePromptReject = (req) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Recusar Proposta de Fornecedor',
+      message: `Tem certeza que deseja recusar a solicitação de parceria de "${req.companyName}"?`,
+      actionType: 'reject_req',
+      payload: req.id,
+      variant: 'danger'
+    });
+  };
+
+  const handlePromptTogglePartner = (partner) => {
+    setConfirmModal({
+      isOpen: true,
+      title: partner.status === 'active' ? 'Suspender Fornecedor' : 'Reativar Fornecedor',
+      message: `Deseja ${partner.status === 'active' ? 'suspender temporariamente' : 'reativar'} o parceiro "${partner.tradeName}"?`,
+      actionType: 'toggle_partner',
+      payload: partner.id,
+      variant: partner.status === 'active' ? 'warning' : 'primary'
+    });
+  };
+
+  const handleSaveCommission = (partnerId) => {
     const rate = parseFloat(tempCommission);
     if (!isNaN(rate) && rate >= 0 && rate <= 100) {
+      setConfirmModal({
+        isOpen: true,
+        title: 'Alterar Taxa de Comissão',
+        message: `Deseja alterar a comissão retida para ${rate}%?`,
+        actionType: 'save_commission',
+        payload: { id: partnerId, rate },
+        variant: 'primary'
+      });
+    }
+  };
+
+  const handleExecuteConfirmedAction = () => {
+    if (confirmModal.actionType === 'approve_req') {
+      onApprovePartner(confirmModal.payload.id, confirmModal.payload.rate);
+      setApprovingReq(null);
+    } else if (confirmModal.actionType === 'reject_req') {
+      onRejectPartner(confirmModal.payload);
+    } else if (confirmModal.actionType === 'toggle_partner') {
       const updated = partners.map((p) => {
-        if (p.id === partnerId) {
-          return { ...p, commissionRate: rate };
+        if (p.id === confirmModal.payload) {
+          return { ...p, status: p.status === 'active' ? 'suspended' : 'active' };
         }
         return p;
       });
       onSavePartners(updated);
+    } else if (confirmModal.actionType === 'save_commission') {
+      const updated = partners.map((p) => {
+        if (p.id === confirmModal.payload.id) {
+          return { ...p, commissionRate: confirmModal.payload.rate };
+        }
+        return p;
+      });
+      onSavePartners(updated);
+      setEditingCommissionId(null);
     }
-    setEditingCommissionId(null);
-  };
 
-  const handleTogglePartnerStatus = (partnerId) => {
-    const updated = partners.map((p) => {
-      if (p.id === partnerId) {
-        return { ...p, status: p.status === 'active' ? 'suspended' : 'active' };
-      }
-      return p;
-    });
-    onSavePartners(updated);
+    setConfirmModal({ isOpen: false, title: '', message: '', actionType: '', payload: null, variant: 'danger' });
   };
 
   const openWhatsAppApproval = (req, commissionRate) => {
     const cleanPhone = req.phone.replace(/\D/g, '');
     const tempPassword = `KP@${Math.floor(1000 + Math.random() * 9000)}`;
     const msg = encodeURIComponent(
-      ` Olá ${req.contactName}, da ${req.companyName}!\n\n` +
+      `🚗 Olá ${req.contactName}, da ${req.companyName}!\n\n` +
       `Temos o prazer de informar que sua solicitação de parceria com a *KronoPex Auto Peças* foi *APROVADA*!\n\n` +
       `*Condições acordadas:*\n` +
       `▪ Comissão retida pela KronoPex: *${commissionRate}%* por peça vendida\n` +
@@ -95,7 +152,7 @@ export function AdminPartners({
 
   return (
     <div className="admin-page-content animate-fade-in">
-      <div className="admin-page-header flex-between mb-4">
+      <div className="admin-page-header flex-between mb-6">
         <div>
           <h2 className="text-xl font-bold">Parcerias com Distribuidores & Marketplace</h2>
           <p className="text-xs text-muted">
@@ -103,23 +160,22 @@ export function AdminPartners({
           </p>
         </div>
 
-        {/* Quick Pending Counter Badge */}
         {pendingRequests.length > 0 && (
-          <span className="badge badge-warning flex-center gap-1 font-bold">
-            <AlertCircle size={13} /> {pendingRequests.length} solicitações pendentes
+          <span className="badge badge-warning flex-center gap-1 font-bold p-2">
+            <AlertCircle size={14} /> {pendingRequests.length} solicitações pendentes
           </span>
         )}
       </div>
 
-      {/* KPI Cards: Marketplace Financials */}
-      <div className="kpi-cards-grid mb-4">
+      {/* KPI Cards Formatados com Padrão Brasileiro Real */}
+      <div className="kpi-cards-grid mb-6">
         <div className="kpi-card glass-panel" onClick={() => setActiveTab('financial')}>
           <div className="kpi-icon-wrap bg-primary-glow">
             <TrendingUp size={22} className="text-primary" />
           </div>
           <div className="kpi-data">
             <span className="kpi-label">Vendas Totais Parceiros (GMV)</span>
-            <span className="kpi-value">R$ {totalPartnerGmv.toFixed(2)}</span>
+            <span className="kpi-value">{formatCurrency(totalPartnerGmv)}</span>
             <span className="kpi-trend text-muted text-xs">Transacionado na loja</span>
           </div>
         </div>
@@ -130,7 +186,7 @@ export function AdminPartners({
           </div>
           <div className="kpi-data">
             <span className="kpi-label">Comissão KronoPex (Lucro Líquido)</span>
-            <span className="kpi-value text-cyan">R$ {totalCommissionEarned.toFixed(2)}</span>
+            <span className="kpi-value text-cyan">{formatCurrency(totalCommissionEarned)}</span>
             <span className="kpi-trend text-green text-xs">Retido pela plataforma</span>
           </div>
         </div>
@@ -141,7 +197,7 @@ export function AdminPartners({
           </div>
           <div className="kpi-data">
             <span className="kpi-label">Saldo a Repassar aos Fornecedores</span>
-            <span className="kpi-value">R$ {totalPayoutDue.toFixed(2)}</span>
+            <span className="kpi-value">{formatCurrency(totalPayoutDue)}</span>
             <span className="kpi-trend text-xs text-muted">A liquidar via PIX</span>
           </div>
         </div>
@@ -158,8 +214,8 @@ export function AdminPartners({
         </div>
       </div>
 
-      {/* Tab Selectors */}
-      <div className="orders-filter-tabs glass-panel mb-4 flex-center gap-2">
+      {/* Abas de Navegação */}
+      <div className="orders-filter-tabs glass-panel mb-6 flex-center gap-2">
         <button
           onClick={() => setActiveTab('requests')}
           className={`order-tab-btn ${activeTab === 'requests' ? 'active' : ''}`}
@@ -187,46 +243,69 @@ export function AdminPartners({
         </button>
       </div>
 
-      {/* TAB 1: Pending Requests */}
+      {/* TAB 1: Solicitações de Parceria (Espaçamento Aprimorado) */}
       {activeTab === 'requests' && (
         <div className="partner-requests-grid">
           {pendingRequests.length === 0 ? (
-            <div className="glass-panel text-center py-10 text-muted text-xs">
+            <div className="glass-panel text-center py-12 text-muted text-xs">
               <CheckCircle2 size={36} className="mx-auto mb-2 text-cyan opacity-40" />
               Não há novas solicitações de parceria pendentes no momento.
             </div>
           ) : (
             pendingRequests.map((req) => (
-              <div key={req.id} className="partner-request-card glass-panel">
-                <div className="flex-between mb-2">
-                  <div className="flex-center gap-2">
-                    <Building2 size={18} className="text-cyan" />
+              <div key={req.id} className="partner-request-card glass-panel p-5">
+                <div className="flex-between mb-4 pb-3 border-bottom">
+                  <div className="flex-center gap-3">
+                    <div className="p-2 rounded bg-surface text-cyan">
+                      <Building2 size={20} />
+                    </div>
                     <div>
                       <strong className="text-sm block text-main">{req.companyName}</strong>
-                      <span className="text-xs text-muted font-mono">CNPJ: {req.cnpj}</span>
+                      <span className="text-xs text-muted font-mono">CNPJ: {formatCNPJ(req.cnpj)}</span>
                     </div>
                   </div>
                   <span className="badge badge-low-stock">Aguardando Avaliação</span>
                 </div>
 
-                <div className="request-info-body text-xs text-muted my-3 space-y-1">
-                  <div><strong>Responsável:</strong> {req.contactName} ({req.city})</div>
-                  <div><strong>Contato:</strong> {req.phone} • {req.email}</div>
-                  <div><strong>Chave PIX Repasses:</strong> {req.pixKey}</div>
-                  <div><strong>Volume Estimado:</strong> {req.estimatedSkus}</div>
-                  <div className="mt-2 p-2 rounded bg-surface text-main">
-                    <em>"{req.message}"</em>
+                <div className="request-info-body text-xs text-muted my-4 space-y-2 leading-relaxed">
+                  <div className="flex-between py-1 border-bottom">
+                    <span className="text-dim">Responsável:</span>
+                    <strong className="text-main">{req.contactName} ({req.city})</strong>
                   </div>
+                  <div className="flex-between py-1 border-bottom">
+                    <span className="text-dim">Telefone / WhatsApp:</span>
+                    <strong className="text-main">{formatPhone(req.phone)}</strong>
+                  </div>
+                  <div className="flex-between py-1 border-bottom">
+                    <span className="text-dim">E-mail Comercial:</span>
+                    <strong className="text-main">{req.email}</strong>
+                  </div>
+                  <div className="flex-between py-1 border-bottom">
+                    <span className="text-dim">Chave PIX Repasses:</span>
+                    <span className="font-mono text-cyan">{req.pixKey}</span>
+                  </div>
+                  <div className="flex-between py-1 border-bottom">
+                    <span className="text-dim">Volume Estimado:</span>
+                    <strong className="text-main">{req.estimatedSkus}</strong>
+                  </div>
+
+                  {req.message && (
+                    <div className="mt-3 p-3 rounded bg-surface text-main text-xs italic">
+                      "{req.message}"
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex-center gap-2 justify-end pt-2 border-top">
+                <div className="flex-center gap-3 justify-end pt-4 border-top">
                   <button
-                    onClick={() => onRejectPartner(req.id)}
+                    type="button"
+                    onClick={() => handlePromptReject(req)}
                     className="btn btn-secondary btn-xs text-danger"
                   >
                     Recusar
                   </button>
                   <button
+                    type="button"
                     onClick={() => handleOpenApproveModal(req)}
                     className="btn btn-primary btn-xs flex-center gap-1"
                   >
@@ -240,7 +319,7 @@ export function AdminPartners({
         </div>
       )}
 
-      {/* TAB 2: Active Partners */}
+      {/* TAB 2: Fornecedores Ativos */}
       {activeTab === 'active' && (
         <div className="admin-table-wrapper glass-panel">
           <table className="admin-table">
@@ -261,11 +340,11 @@ export function AdminPartners({
                   <td>
                     <div>
                       <strong className="text-xs text-main block">{partner.tradeName}</strong>
-                      <span className="text-xs text-muted">{partner.contactName} ({partner.phone})</span>
+                      <span className="text-xs text-muted">{partner.contactName} ({formatPhone(partner.phone)})</span>
                     </div>
                   </td>
                   <td>
-                    <span className="font-mono text-xs text-muted block">{partner.cnpj}</span>
+                    <span className="font-mono text-xs text-muted block">{formatCNPJ(partner.cnpj)}</span>
                     <span className="text-xs text-dim">{partner.city}</span>
                   </td>
                   <td>
@@ -279,46 +358,51 @@ export function AdminPartners({
                           onChange={(e) => setTempCommission(e.target.value)}
                         />
                         <button
-                          onClick={() => handleUpdateCommission(partner.id)}
+                          type="button"
+                          onClick={() => handleSaveCommission(partner.id)}
                           className="btn btn-primary btn-xs"
                         >
-                          OK
+                          Salvar
                         </button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => {
-                          setEditingCommissionId(partner.id);
-                          setTempCommission(partner.commissionRate.toString());
-                        }}
-                        className="badge badge-express font-bold cursor-pointer hover:opacity-80"
-                        title="Clique para editar comissão"
-                      >
-                        {partner.commissionRate}% Retido
-                      </button>
+                      <div className="flex-center gap-2">
+                        <strong className="text-cyan text-xs">{partner.commissionRate}%</strong>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingCommissionId(partner.id);
+                            setTempCommission(String(partner.commissionRate));
+                          }}
+                          className="text-xs text-muted hover-underline"
+                        >
+                          Alterar
+                        </button>
+                      </div>
                     )}
                   </td>
                   <td>
                     <strong className="text-xs text-main">
-                      R$ {(partner.metrics?.totalSold || 0).toFixed(2)}
+                      {formatCurrency(partner.metrics?.totalSold || 0)}
                     </strong>
                   </td>
                   <td>
-                    <span className="font-bold text-xs text-warning">
-                      R$ {(partner.metrics?.payoutDue || 0).toFixed(2)}
-                    </span>
+                    <strong className="text-xs text-warning">
+                      {formatCurrency(partner.metrics?.payoutDue || 0)}
+                    </strong>
                   </td>
                   <td>
-                    <span className={`badge ${partner.status === 'active' ? 'badge-stock' : 'badge-danger'}`}>
-                      {partner.status === 'active' ? 'Ativo' : 'Bloqueado'}
+                    <span className={`badge ${partner.status === 'active' ? 'badge-stock' : 'badge-low-stock'}`}>
+                      {partner.status === 'active' ? 'Ativo' : 'Suspenso'}
                     </span>
                   </td>
                   <td className="text-right">
                     <button
-                      onClick={() => handleTogglePartnerStatus(partner.id)}
-                      className="btn btn-secondary btn-xs"
+                      type="button"
+                      onClick={() => handlePromptTogglePartner(partner)}
+                      className={`btn btn-secondary btn-xs ${partner.status === 'active' ? 'text-warning' : 'text-green'}`}
                     >
-                      {partner.status === 'active' ? 'Bloquear' : 'Ativar'}
+                      {partner.status === 'active' ? 'Suspender' : 'Reativar'}
                     </button>
                   </td>
                 </tr>
@@ -328,84 +412,74 @@ export function AdminPartners({
         </div>
       )}
 
-      {/* TAB 3: Financial Settlement & Split */}
+      {/* TAB 3: Extrato Financeiro & Split */}
       {activeTab === 'financial' && (
-        <div className="financial-split-sheet glass-panel p-4">
-          <div className="flex-between mb-3">
-            <div>
-              <h3 className="font-bold text-base text-main">Divisão de Receitas (Split Automático)</h3>
-              <p className="text-xs text-muted">
-                Demonstrativo de cada peça vendida de parceiro, valor bruto, taxa da KronoPex e líquido a transferir
-              </p>
-            </div>
+        <div className="admin-table-wrapper glass-panel p-5">
+          <div className="mb-4">
+            <h3 className="font-bold text-sm text-main">Extrato de Vendas & Comissões de Fornecedores</h3>
+            <p className="text-xs text-muted">
+              Divisão automática de valores transacionados na loja e montantes a liquidar via PIX
+            </p>
           </div>
 
-          <div className="admin-table-wrapper">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Distribuidor Parceiro</th>
-                  <th>Chave PIX Cadastrada</th>
-                  <th>Vendas Brutas (R$)</th>
-                  <th>Taxa (%)</th>
-                  <th>Receita KronoPex (R$)</th>
-                  <th>Líquido do Parceiro (R$)</th>
-                  <th className="text-right">Status do Repasse</th>
-                </tr>
-              </thead>
-              <tbody>
-                {partners.map((p) => {
-                  const gross = p.metrics?.totalSold || 0;
-                  const kronopexShare = p.metrics?.commissionRetained || 0;
-                  const partnerNet = p.metrics?.payoutDue || 0;
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Fornecedor</th>
+                <th>Chave PIX de Repasse</th>
+                <th>Vendas Brutas (GMV)</th>
+                <th>Taxa KronoPex</th>
+                <th>Lucro KronoPex Retido</th>
+                <th>Valor Líquido a Repassar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {partners.map((partner) => {
+                const sold = partner.metrics?.totalSold || 0;
+                const retained = partner.metrics?.commissionRetained || (sold * (partner.commissionRate / 100));
+                const payout = partner.metrics?.payoutDue || (sold - retained);
 
-                  return (
-                    <tr key={p.id}>
-                      <td>
-                        <strong className="text-xs text-main block">{p.companyName}</strong>
-                        <span className="text-xs text-muted">{p.contactName}</span>
-                      </td>
-                      <td>
-                        <span className="font-mono text-xs text-cyan">{p.pixKey}</span>
-                      </td>
-                      <td>R$ {gross.toFixed(2)}</td>
-                      <td>
-                        <span className="badge badge-express font-bold">{p.commissionRate}%</span>
-                      </td>
-                      <td>
-                        <strong className="text-xs text-cyan">R$ {kronopexShare.toFixed(2)}</strong>
-                      </td>
-                      <td>
-                        <strong className="text-xs text-warning">R$ {partnerNet.toFixed(2)}</strong>
-                      </td>
-                      <td className="text-right">
-                        <button
-                          onClick={() => alert(`Repasse de R$ ${partnerNet.toFixed(2)} para a chave PIX ${p.pixKey} registrado com sucesso!`)}
-                          className="btn btn-primary btn-xs"
-                        >
-                          Pagar via PIX
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                return (
+                  <tr key={partner.id}>
+                    <td>
+                      <strong className="text-xs text-main block">{partner.tradeName}</strong>
+                      <span className="text-xs text-muted">{partner.companyName}</span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs text-cyan">{partner.pixKey}</span>
+                    </td>
+                    <td>
+                      <strong className="text-xs text-main">{formatCurrency(sold)}</strong>
+                    </td>
+                    <td>
+                      <span className="badge badge-express">{partner.commissionRate}%</span>
+                    </td>
+                    <td>
+                      <strong className="text-xs text-green">{formatCurrency(retained)}</strong>
+                    </td>
+                    <td>
+                      <strong className="text-xs text-warning">{formatCurrency(payout)}</strong>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* Modal: Approve Partner & Configure Commission */}
+      {/* Modal de Aprovação de Solicitação */}
       {approvingReq && (
         <div className="modal-backdrop animate-fade-in" onClick={() => setApprovingReq(null)}>
           <div
-            className="modal-dialog admin-approve-dialog glass-panel"
+            className="modal-dialog admin-approve-dialog glass-panel p-6"
             onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '520px', width: '92%' }}
           >
-            <div className="modal-header flex-between mb-3">
+            <div className="modal-header flex-between mb-4">
               <h3 className="font-bold text-base flex-center gap-2">
-                <Shield size={18} className="text-cyan" />
-                <span>Aprovar Parceria com {approvingReq.companyName}</span>
+                <CheckCircle2 size={20} className="text-cyan" />
+                <span>Aprovar Credenciamento de Parceiro</span>
               </h3>
               <button onClick={() => setApprovingReq(null)} className="modal-close-btn">
                 ✕
@@ -413,52 +487,42 @@ export function AdminPartners({
             </div>
 
             <form onSubmit={handleConfirmApprove}>
-              <div className="partner-approval-summary p-3 rounded bg-surface text-xs mb-3 space-y-1">
-                <div><strong>CNPJ:</strong> {approvingReq.cnpj}</div>
-                <div><strong>Responsável:</strong> {approvingReq.contactName} ({approvingReq.phone})</div>
-                <div><strong>E-mail:</strong> {approvingReq.email}</div>
-                <div><strong>Chave PIX:</strong> {approvingReq.pixKey}</div>
+              <div className="p-4 rounded bg-surface mb-4 space-y-2 text-xs">
+                <div><span className="text-dim">Empresa:</span> <strong className="text-main">{approvingReq.companyName}</strong></div>
+                <div><span className="text-dim">CNPJ:</span> <span className="font-mono text-muted">{formatCNPJ(approvingReq.cnpj)}</span></div>
+                <div><span className="text-dim">Contato:</span> <strong className="text-main">{approvingReq.contactName} ({formatPhone(approvingReq.phone)})</strong></div>
               </div>
 
               <div className="form-field mb-4">
-                <label className="font-bold text-main">
-                  Percentual de Comissão Retido pela KronoPex (%):
+                <label className="text-xs font-semibold text-main block mb-1">
+                  Taxa de Comissão KronoPex (%) *
                 </label>
-                <p className="text-xs text-muted mb-2">
-                  Esta porcentagem será descontada automaticamente de cada peça vendida deste distribuidor parceiro.
-                </p>
-                <div className="flex-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    step="0.5"
-                    required
-                    value={commissionInput}
-                    onChange={(e) => setCommissionInput(e.target.value)}
-                    className="admin-input-lg"
-                    style={{ maxWidth: '140px' }}
-                  />
-                  <span className="font-bold text-lg text-cyan">%</span>
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="0.5"
+                  required
+                  value={commissionInput}
+                  onChange={(e) => setCommissionInput(e.target.value)}
+                  className="admin-input-lg w-full"
+                />
+                <span className="text-xs text-muted block mt-1">
+                  Percentual retido pela KronoPex sobre o valor de cada peça vendida na loja.
+                </span>
+              </div>
+
+              <div className="whatsapp-approval-banner p-3 rounded mb-4 flex-center gap-3">
+                <MessageCircle size={22} className="text-green flex-shrink-0" />
+                <div className="text-xs">
+                  <strong className="text-main block">Notificação via WhatsApp</strong>
+                  <span className="text-muted">
+                    Ao aprovar, você poderá enviar uma mensagem automática no WhatsApp com os dados de acesso e comissão acordada.
+                  </span>
                 </div>
               </div>
 
-              <div className="whatsapp-approval-banner p-3 rounded mb-4 flex-between text-xs glass-panel">
-                <span className="text-muted">
-                  Ao aprovar, envie as credenciais de acesso direto no WhatsApp do parceiro:
-                </span>
-                <button
-                  type="button"
-                  onClick={() => openWhatsAppApproval(approvingReq, commissionInput)}
-                  className="btn btn-secondary btn-xs flex-center gap-1"
-                  style={{ color: '#25D366' }}
-                >
-                  <MessageCircle size={14} />
-                  <span>Enviar Acesso no WhatsApp</span>
-                </button>
-              </div>
-
-              <div className="flex-center gap-2 justify-end">
+              <div className="flex-center gap-3 justify-end pt-3 border-top">
                 <button
                   type="button"
                   onClick={() => setApprovingReq(null)}
@@ -466,14 +530,25 @@ export function AdminPartners({
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn btn-primary">
-                  Confirmar e Liberar Acesso do Parceiro
+                <button type="submit" className="btn btn-primary flex-center gap-2">
+                  <CheckCircle2 size={16} />
+                  <span>Aprovar & Homologar</span>
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Confirmação Universal */}
+      <ConfirmationModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        variant={confirmModal.variant}
+        onConfirm={handleExecuteConfirmedAction}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      />
     </div>
   );
 }

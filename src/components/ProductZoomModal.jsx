@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, ZoomIn, ShoppingBag, ShieldCheck, Check, Truck, Car } from 'lucide-react';
+import { formatCurrency } from '../utils/formatters';
 
 export function ProductZoomModal({
   product,
@@ -145,13 +146,13 @@ export function ProductZoomModal({
             <div className="zoom-buy-card">
               <div className="zoom-prices">
                 <div className="zoom-pix-price-box">
-                  <span className="text-xs text-muted">Valor no PIX (com 10% de desconto):</span>
+                  <span className="text-xs text-muted">Valor no PIX (com desconto):</span>
                   <span className="zoom-pix-price text-gradient-cyan">
-                    R$ {(product.pixDiscountPrice || product.price * 0.9).toFixed(2)}
+                    {formatCurrency(product.pixDiscountPrice || product.price * 0.9)}
                   </span>
                 </div>
                 <div className="text-xs text-muted">
-                  ou R$ {product.price.toFixed(2)} parcelado em até 3x sem juros
+                  ou {formatCurrency(product.price)} parcelado em até 6x no cartão
                 </div>
               </div>
 

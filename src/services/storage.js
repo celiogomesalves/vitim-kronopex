@@ -1,11 +1,14 @@
-import { INITIAL_PRODUCTS } from '../data/mockProducts';
+import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '../data/mockProducts';
 import { INITIAL_COURIERS } from '../data/mockCouriers';
 import { INITIAL_ORDERS } from '../data/mockOrders';
 import { INITIAL_STAFF } from '../data/mockUsers';
 import { INITIAL_PARTNERS, INITIAL_PARTNER_REQUESTS } from '../data/mockPartners';
+import { INITIAL_PAYMENT_METHODS } from '../data/mockPaymentMethods';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'kronopex_products',
+  CATEGORIES: 'kronopex_categories',
+  PAYMENT_METHODS: 'kronopex_payment_methods',
   COURIERS: 'kronopex_couriers',
   ORDERS: 'kronopex_orders',
   STAFF: 'kronopex_staff',
@@ -35,7 +38,12 @@ export const StorageService = {
   getProducts: () => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
-      return data ? JSON.parse(data) : INITIAL_PRODUCTS;
+      const list = data ? JSON.parse(data) : INITIAL_PRODUCTS;
+      // Normaliza approvalStatus para produtos existentes da loja
+      return list.map((p) => ({
+        ...p,
+        approvalStatus: p.approvalStatus || 'approved'
+      }));
     } catch {
       return INITIAL_PRODUCTS;
     }
@@ -44,6 +52,52 @@ export const StorageService = {
   saveProducts: (products) => {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
     window.dispatchEvent(new Event('kronopex_products_updated'));
+  },
+
+  approveProduct: (productId) => {
+    const products = StorageService.getProducts();
+    const updated = products.map((p) =>
+      p.id === productId ? { ...p, approvalStatus: 'approved' } : p
+    );
+    StorageService.saveProducts(updated);
+    return updated;
+  },
+
+  rejectProduct: (productId) => {
+    const products = StorageService.getProducts();
+    const updated = products.map((p) =>
+      p.id === productId ? { ...p, approvalStatus: 'rejected' } : p
+    );
+    StorageService.saveProducts(updated);
+    return updated;
+  },
+
+  getCategories: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+      return data ? JSON.parse(data) : INITIAL_CATEGORIES;
+    } catch {
+      return INITIAL_CATEGORIES;
+    }
+  },
+
+  saveCategories: (categories) => {
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+    window.dispatchEvent(new Event('kronopex_categories_updated'));
+  },
+
+  getPaymentMethods: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.PAYMENT_METHODS);
+      return data ? JSON.parse(data) : INITIAL_PAYMENT_METHODS;
+    } catch {
+      return INITIAL_PAYMENT_METHODS;
+    }
+  },
+
+  savePaymentMethods: (methods) => {
+    localStorage.setItem(STORAGE_KEYS.PAYMENT_METHODS, JSON.stringify(methods));
+    window.dispatchEvent(new Event('kronopex_payments_updated'));
   },
 
   getCouriers: () => {
@@ -104,6 +158,7 @@ export const StorageService = {
 
   saveStaff: (staff) => {
     localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staff));
+    window.dispatchEvent(new Event('kronopex_staff_updated'));
   },
 
   getCurrentUser: () => {
@@ -134,6 +189,7 @@ export const StorageService = {
 
   saveConfig: (config) => {
     localStorage.setItem(STORAGE_KEYS.STORE_CONFIG, JSON.stringify(config));
+    window.dispatchEvent(new Event('kronopex_config_updated'));
   },
 
   getPartners: () => {
@@ -194,6 +250,8 @@ export const StorageService = {
       city: req.city,
       commissionRate: Number(commissionRate) || 12,
       status: 'active',
+      canUploadProducts: true,
+      requiresApproval: true, // Fornecedores autorizados precisam de aprovação antes de expor na vitrine
       pixKey: req.pixKey || req.email,
       categories: req.categories || ['motor', 'freios'],
       approvedAt: new Date().toISOString(),
@@ -227,6 +285,8 @@ export const StorageService = {
   // Reset to initial state for demo testing
   resetDemoData: () => {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
+    localStorage.setItem(STORAGE_KEYS.PAYMENT_METHODS, JSON.stringify(INITIAL_PAYMENT_METHODS));
     localStorage.setItem(STORAGE_KEYS.COURIERS, JSON.stringify(INITIAL_COURIERS));
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
     localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(INITIAL_STAFF));

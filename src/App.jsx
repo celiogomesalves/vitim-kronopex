@@ -21,6 +21,8 @@ import './App.css';
 export function App() {
   // Master Datasets
   const [products, setProducts] = useState(() => StorageService.getProducts());
+  const [categories, setCategories] = useState(() => StorageService.getCategories());
+  const [paymentMethods, setPaymentMethods] = useState(() => StorageService.getPaymentMethods());
   const [orders, setOrders] = useState(() => StorageService.getOrders());
   const [couriers, setCouriers] = useState(() => StorageService.getCouriers());
   const [staff, setStaff] = useState(() => StorageService.getStaff());
@@ -113,6 +115,12 @@ export function App() {
     const handleProductsUpdated = () => {
       setProducts(StorageService.getProducts());
     };
+    const handleCategoriesUpdated = () => {
+      setCategories(StorageService.getCategories());
+    };
+    const handlePaymentsUpdated = () => {
+      setPaymentMethods(StorageService.getPaymentMethods());
+    };
     const handleOrdersUpdated = () => {
       setOrders(StorageService.getOrders());
     };
@@ -127,6 +135,8 @@ export function App() {
     };
 
     window.addEventListener('kronopex_products_updated', handleProductsUpdated);
+    window.addEventListener('kronopex_categories_updated', handleCategoriesUpdated);
+    window.addEventListener('kronopex_payments_updated', handlePaymentsUpdated);
     window.addEventListener('kronopex_orders_updated', handleOrdersUpdated);
     window.addEventListener('kronopex_couriers_updated', handleCouriersUpdated);
     window.addEventListener('kronopex_partners_updated', handlePartnersUpdated);
@@ -134,6 +144,8 @@ export function App() {
 
     return () => {
       window.removeEventListener('kronopex_products_updated', handleProductsUpdated);
+      window.removeEventListener('kronopex_categories_updated', handleCategoriesUpdated);
+      window.removeEventListener('kronopex_payments_updated', handlePaymentsUpdated);
       window.removeEventListener('kronopex_orders_updated', handleOrdersUpdated);
       window.removeEventListener('kronopex_couriers_updated', handleCouriersUpdated);
       window.removeEventListener('kronopex_partners_updated', handlePartnersUpdated);
@@ -141,9 +153,14 @@ export function App() {
     };
   }, []);
 
+  // Produtos aprovados para a vitrine pública (loja própria ou homologados e aprovados pelo admin)
+  const approvedProducts = useMemo(() => {
+    return products.filter((item) => !item.partnerId || item.approvalStatus === 'approved');
+  }, [products]);
+
   // Filter products by search and category
   const filteredProducts = useMemo(() => {
-    return products.filter((item) => {
+    return approvedProducts.filter((item) => {
       const matchesCategory =
         selectedCategory === 'all' || item.category === selectedCategory;
 
@@ -152,23 +169,23 @@ export function App() {
 
       const matchesName = item.name.toLowerCase().includes(q);
       const matchesBrand = item.brand.toLowerCase().includes(q);
-      const matchesOem = item.oemCode.toLowerCase().includes(q);
+      const matchesOem = item.oemCode?.toLowerCase().includes(q);
       const matchesVehicles = item.vehicles?.some((v) =>
         v.toLowerCase().includes(q)
       );
 
       return matchesCategory && (matchesName || matchesBrand || matchesOem || matchesVehicles);
     });
-  }, [products, selectedCategory, searchTerm]);
+  }, [approvedProducts, selectedCategory, searchTerm]);
 
   // Product counts per category
   const productCounts = useMemo(() => {
-    const map = { all: products.length };
-    products.forEach((p) => {
+    const map = { all: approvedProducts.length };
+    approvedProducts.forEach((p) => {
       map[p.category] = (map[p.category] || 0) + 1;
     });
     return map;
-  }, [products]);
+  }, [approvedProducts]);
 
   // Cart operations
   const handleAddToCart = (product) => {
@@ -250,6 +267,16 @@ export function App() {
   const handleSaveProducts = (updated) => {
     StorageService.saveProducts(updated);
     setProducts(updated);
+  };
+
+  const handleSaveCategories = (updated) => {
+    StorageService.saveCategories(updated);
+    setCategories(updated);
+  };
+
+  const handleSavePaymentMethods = (updated) => {
+    StorageService.savePaymentMethods(updated);
+    setPaymentMethods(updated);
   };
 
   const handleSaveOrders = (updated) => {
@@ -335,6 +362,7 @@ export function App() {
         onBackToStore={() => setViewMode('store')}
         products={products}
         onSaveProducts={handleSaveProducts}
+        categories={categories}
       />
     );
   }
@@ -348,6 +376,10 @@ export function App() {
         onBackToStore={() => setViewMode('store')}
         products={products}
         onSaveProducts={handleSaveProducts}
+        categories={categories}
+        onSaveCategories={handleSaveCategories}
+        paymentMethods={paymentMethods}
+        onSavePaymentMethods={handleSavePaymentMethods}
         orders={orders}
         onSaveOrders={handleSaveOrders}
         couriers={couriers}
@@ -370,7 +402,7 @@ export function App() {
 
   return (
     <div className="store-app-wrapper">
-      {/* Ambient Cyber Light System (Vibe Design Reference) */}
+      {/* Ambient Cyber Light System */}
       <div className="bg-ambient-lights" aria-hidden="true">
         <div className="grid-bg-overlay"></div>
         <div className="ambient-orb-top"></div>
@@ -404,11 +436,12 @@ export function App() {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         productCounts={productCounts}
+        categories={categories}
       />
 
       {/* Main Products Vitrine Section */}
       <main className="products-section container">
-        <div className="vitrine-header-row flex-between">
+        <div className="vitrine-header-row flex-between mb-4">
           <div>
             <h2 className="text-xl font-bold text-main">
               {selectedCategory === 'all'
@@ -495,6 +528,7 @@ export function App() {
         items={cart}
         onOrderCompleted={handleOrderCompleted}
         config={config}
+        paymentMethods={paymentMethods}
       />
 
       {/* Order Confirmed & WhatsApp Dispatch Modal */}

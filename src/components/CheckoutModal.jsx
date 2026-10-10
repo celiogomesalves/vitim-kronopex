@@ -9,16 +9,26 @@ import {
   Banknote,
   Truck,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
+import { StorageService } from '../services/storage';
+import { formatCurrency, formatPhone, formatCEP } from '../utils/formatters';
 
 export function CheckoutModal({
   isOpen,
   onClose,
   items,
   onOrderCompleted,
-  config
+  config,
+  paymentMethods = []
 }) {
+  const activePaymentMethods = (paymentMethods.length > 0 ? paymentMethods : StorageService.getPaymentMethods()).filter(
+    (m) => m.active !== false
+  );
+
+  const defaultMethod = activePaymentMethods[0]?.id || 'pay-pix';
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -28,7 +38,7 @@ export function CheckoutModal({
     neighborhood: '',
     city: 'São Paulo',
     reference: '',
-    paymentMethod: 'pix', // 'pix' | 'card_delivery' | 'cash'
+    selectedPaymentId: defaultMethod,
     cashChangeFor: '',
     notes: ''
   });
@@ -39,11 +49,13 @@ export function CheckoutModal({
 
   if (!isOpen) return null;
 
+  const currentPayment = activePaymentMethods.find((m) => m.id === formData.selectedPaymentId) || activePaymentMethods[0];
+  const discountRate = (currentPayment?.discountPercent || 0) / 100;
+
   const subtotal = items.reduce((acc, item) => {
-    const itemPrice = formData.paymentMethod === 'pix'
-      ? (item.pixDiscountPrice || item.price * 0.9)
-      : item.price;
-    return acc + itemPrice * item.quantity;
+    const rawPrice = item.price;
+    const finalPrice = discountRate > 0 ? rawPrice * (1 - discountRate) : rawPrice;
+    return acc + finalPrice * item.quantity;
   }, 0);
 
   const deliveryFee = subtotal >= (config?.freeDeliveryThreshold || 200)
@@ -111,16 +123,15 @@ export function CheckoutModal({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
-        price: formData.paymentMethod === 'pix'
-          ? (item.pixDiscountPrice || item.price * 0.9)
-          : item.price
+        price: discountRate > 0 ? item.price * (1 - discountRate) : item.price
       })),
       subtotal,
       deliveryFee,
       total,
-      paymentMethod: formData.paymentMethod,
+      paymentMethod: currentPayment?.type || 'pix',
+      paymentMethodName: currentPayment?.name || 'PIX',
       cashChangeFor: formData.cashChangeFor,
-      status: 'pending', // 'pending' -> 'preparing' -> 'delivering' -> 'delivered'
+      status: 'pending',
       courierId: null,
       notes: formData.notes
     };
@@ -131,6 +142,20 @@ export function CheckoutModal({
     }, 600);
   };
 
+  const getMethodIcon = (type) => {
+    switch (type) {
+      case 'pix':
+        return <QrCode size={22} className="text-cyan" />;
+      case 'card_delivery':
+      case 'debit_delivery':
+        return <CreditCard size={22} className="text-cyan" />;
+      case 'cash':
+        return <Banknote size={22} className="text-green" />;
+      default:
+        return <FileText size={22} className="text-warning" />;
+    }
+  };
+
   return (
     <div className="modal-backdrop animate-fade-in" onClick={onClose}>
       <div
@@ -138,7 +163,7 @@ export function CheckoutModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="checkout-modal-header flex-between">
+        <div className="checkout-modal-header flex-between mb-4">
           <div className="flex-center gap-2">
             <Truck size={22} className="text-cyan" />
             <div>
@@ -146,7 +171,7 @@ export function CheckoutModal({
                 Finalizar Pedido com KronoPex Delivery
               </h3>
               <p className="text-xs text-muted">
-                Sem cadastro obrigatório. Preencha apenas os dados para entrega.
+                Sem burocracia ou cadastro prévio. Peças novas entregues no seu endereço com rapidez.
               </p>
             </div>
           </div>
@@ -156,7 +181,7 @@ export function CheckoutModal({
         </div>
 
         {errorMsg && (
-          <div className="checkout-alert-error flex-center gap-2">
+          <div className="checkout-alert-error flex-center gap-2 mb-4 p-3 rounded">
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
@@ -164,12 +189,12 @@ export function CheckoutModal({
 
         <form onSubmit={handleSubmit} className="checkout-form-grid">
           {/* Left Form: Delivery and Contact */}
-          <div className="checkout-form-fields">
+          <div className="checkout-form-fields space-y-4">
             {/* Customer Contact */}
-            <div className="form-section-group">
-              <h4 className="form-section-title flex-center gap-2">
+            <div className="form-section-group glass-panel p-4">
+              <h4 className="form-section-title flex-center gap-2 mb-3">
                 <User size={16} className="text-cyan" />
-                <span>Seus Dados de Contato</span>
+                <span className="font-semibold text-sm">Seus Dados de Contato</span>
               </h4>
 
               <div className="input-row">
@@ -178,7 +203,7 @@ export function CheckoutModal({
                   <input
                     type="text"
                     required
-                    placeholder="Ex: João da Silva / Oficina AutoCenter"
+                    placeholder="Ex: João da Silva / AutoCenter"
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -186,7 +211,7 @@ export function CheckoutModal({
                   />
                 </div>
                 <div className="form-field flex-1">
-                  <label>WhatsApp / Telefone para Confirmação *</label>
+                  <label>WhatsApp para Confirmação *</label>
                   <div className="input-with-icon">
                     <Phone size={15} className="field-icon" />
                     <input
@@ -195,7 +220,7 @@ export function CheckoutModal({
                       placeholder="(11) 99999-9999"
                       value={formData.phone}
                       onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
+                        setFormData({ ...formData, phone: formatPhone(e.target.value) })
                       }
                     />
                   </div>
@@ -204,26 +229,26 @@ export function CheckoutModal({
             </div>
 
             {/* Delivery Address */}
-            <div className="form-section-group">
-              <h4 className="form-section-title flex-center gap-2">
+            <div className="form-section-group glass-panel p-4">
+              <h4 className="form-section-title flex-center gap-2 mb-3">
                 <MapPin size={16} className="text-cyan" />
-                <span>Endereço Completo de Entrega</span>
+                <span className="font-semibold text-sm">Endereço de Entrega da Peça</span>
               </h4>
 
               <div className="input-row">
                 <div className="form-field" style={{ maxWidth: '180px' }}>
-                  <label>CEP (Opcional)</label>
+                  <label>CEP</label>
                   <input
                     type="text"
                     placeholder="00000-000"
                     value={formData.cep}
                     onBlur={handleCepBlur}
                     onChange={(e) =>
-                      setFormData({ ...formData, cep: e.target.value })
+                      setFormData({ ...formData, cep: formatCEP(e.target.value) })
                     }
                   />
                   {isLoadingCep && (
-                    <span className="text-xs text-cyan">Buscando CEP...</span>
+                    <span className="text-xs text-cyan">Consultando CEP...</span>
                   )}
                 </div>
                 <div className="form-field flex-1">
@@ -252,7 +277,7 @@ export function CheckoutModal({
                 </div>
               </div>
 
-              <div className="input-row">
+              <div className="input-row mt-3">
                 <div className="form-field flex-1">
                   <label>Bairro</label>
                   <input
@@ -276,11 +301,11 @@ export function CheckoutModal({
                 </div>
               </div>
 
-              <div className="form-field">
+              <div className="form-field mt-3">
                 <label>Ponto de Referência ou Nome da Oficina</label>
                 <input
                   type="text"
-                  placeholder="Ex: Em frente ao posto Ipiranga, oficina Box 4"
+                  placeholder="Ex: Em frente ao posto, portão azul"
                   value={formData.reference}
                   onChange={(e) =>
                     setFormData({ ...formData, reference: e.target.value })
@@ -289,92 +314,52 @@ export function CheckoutModal({
               </div>
             </div>
 
-            {/* Payment Method Selector */}
-            <div className="form-section-group">
-              <h4 className="form-section-title flex-center gap-2">
+            {/* Payment Method Selector (Dinâmico do Administrador) */}
+            <div className="form-section-group glass-panel p-4">
+              <h4 className="form-section-title flex-center gap-2 mb-3">
                 <CreditCard size={16} className="text-cyan" />
-                <span>Forma de Pagamento</span>
+                <span className="font-semibold text-sm">Forma de Pagamento Aceita</span>
               </h4>
 
               <div className="payment-options-grid">
-                <label
-                  className={`payment-option-card ${
-                    formData.paymentMethod === 'pix' ? 'selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="pix"
-                    checked={formData.paymentMethod === 'pix'}
-                    onChange={() =>
-                      setFormData({ ...formData, paymentMethod: 'pix' })
-                    }
-                  />
-                  <div className="option-inner">
-                    <QrCode size={22} className="text-cyan" />
-                    <div>
-                      <strong className="block">PIX Imediato</strong>
-                      <span className="text-xs text-green font-bold">
-                        10% de Desconto
-                      </span>
-                    </div>
-                  </div>
-                </label>
-
-                <label
-                  className={`payment-option-card ${
-                    formData.paymentMethod === 'card_delivery' ? 'selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="card_delivery"
-                    checked={formData.paymentMethod === 'card_delivery'}
-                    onChange={() =>
-                      setFormData({ ...formData, paymentMethod: 'card_delivery' })
-                    }
-                  />
-                  <div className="option-inner">
-                    <CreditCard size={22} className="text-cyan" />
-                    <div>
-                      <strong className="block">Cartão na Entrega</strong>
-                      <span className="text-xs text-muted">
-                        Maquininha com Motoboy
-                      </span>
-                    </div>
-                  </div>
-                </label>
-
-                <label
-                  className={`payment-option-card ${
-                    formData.paymentMethod === 'cash' ? 'selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cash"
-                    checked={formData.paymentMethod === 'cash'}
-                    onChange={() =>
-                      setFormData({ ...formData, paymentMethod: 'cash' })
-                    }
-                  />
-                  <div className="option-inner">
-                    <Banknote size={22} className="text-cyan" />
-                    <div>
-                      <strong className="block">Dinheiro</strong>
-                      <span className="text-xs text-muted">
-                        Pagar no recebimento
-                      </span>
-                    </div>
-                  </div>
-                </label>
+                {activePaymentMethods.map((method) => {
+                  const isSelected = formData.selectedPaymentId === method.id;
+                  return (
+                    <label
+                      key={method.id}
+                      className={`payment-option-card ${isSelected ? 'selected' : ''}`}
+                    >
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method.id}
+                        checked={isSelected}
+                        onChange={() =>
+                          setFormData({ ...formData, selectedPaymentId: method.id })
+                        }
+                      />
+                      <div className="option-inner flex-center gap-3">
+                        {getMethodIcon(method.type)}
+                        <div>
+                          <strong className="block text-xs text-main">{method.name}</strong>
+                          {method.discountPercent > 0 ? (
+                            <span className="text-xs text-green font-bold">
+                              {method.discountPercent}% de Desconto
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted">
+                              {method.description || 'Pagamento seguro'}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
 
-              {formData.paymentMethod === 'cash' && (
-                <div className="form-field mt-2 animate-slide-down">
+              {currentPayment?.requiresChange && (
+                <div className="form-field mt-3 animate-slide-down">
                   <label>Precisa de troco para quanto?</label>
                   <input
                     type="text"
@@ -390,49 +375,52 @@ export function CheckoutModal({
           </div>
 
           {/* Right Column: Order Summary & Confirmation */}
-          <div className="checkout-summary-box glass-panel">
+          <div className="checkout-summary-box glass-panel p-5">
             <h4 className="summary-title font-bold text-base mb-3">
               Resumo do Pedido ({items.reduce((acc, i) => acc + i.quantity, 0)} itens)
             </h4>
 
-            <div className="checkout-items-preview">
-              {items.map((item) => (
-                <div key={item.id} className="preview-item-row flex-between text-xs">
-                  <span className="preview-item-name">
-                    {item.quantity}x {item.name}
-                  </span>
-                  <span className="preview-item-val font-semibold">
-                    R$ {((formData.paymentMethod === 'pix' ? (item.pixDiscountPrice || item.price * 0.9) : item.price) * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+            <div className="checkout-items-preview space-y-2">
+              {items.map((item) => {
+                const itemFinalPrice = discountRate > 0 ? item.price * (1 - discountRate) : item.price;
+                return (
+                  <div key={item.id} className="preview-item-row flex-between text-xs py-1 border-bottom">
+                    <span className="preview-item-name text-muted">
+                      {item.quantity}x {item.name}
+                    </span>
+                    <span className="preview-item-val font-semibold text-main">
+                      {formatCurrency(itemFinalPrice * item.quantity)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
 
-            <div className="summary-calc-lines mt-3 pt-3 border-top">
-              <div className="flex-between text-xs text-muted mb-1">
-                <span>Subtotal dos produtos</span>
-                <span>R$ {subtotal.toFixed(2)}</span>
+            <div className="summary-calc-lines mt-4 pt-3 border-top space-y-2">
+              <div className="flex-between text-xs text-muted">
+                <span>Subtotal dos produtos:</span>
+                <span className="text-main">{formatCurrency(subtotal)}</span>
               </div>
-              <div className="flex-between text-xs text-muted mb-1">
-                <span>Taxa de Entrega</span>
+              <div className="flex-between text-xs text-muted">
+                <span>Taxa de Entrega:</span>
                 <span>
                   {deliveryFee === 0 ? (
                     <strong className="text-cyan">GRÁTIS</strong>
                   ) : (
-                    `R$ ${deliveryFee.toFixed(2)}`
+                    formatCurrency(deliveryFee)
                   )}
                 </span>
               </div>
-              {formData.paymentMethod === 'pix' && (
-                <div className="flex-between text-xs text-green mb-1 font-semibold">
-                  <span>Desconto Especial PIX</span>
-                  <span>-10% aplicado</span>
+              {discountRate > 0 && (
+                <div className="flex-between text-xs text-green font-semibold">
+                  <span>Desconto ({currentPayment.name}):</span>
+                  <span>-{(discountRate * 100).toFixed(0)}% aplicado</span>
                 </div>
               )}
-              <div className="flex-between text-base font-bold text-main mt-3 pt-2 border-top">
+              <div className="flex-between text-base font-bold text-main mt-3 pt-3 border-top">
                 <span>Total a Pagar:</span>
-                <span className="text-gradient-cyan text-xl">
-                  R$ {total.toFixed(2)}
+                <span className="text-cyan text-xl">
+                  {formatCurrency(total)}
                 </span>
               </div>
             </div>
@@ -440,7 +428,7 @@ export function CheckoutModal({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn btn-primary w-full btn-lg mt-4 flex-center gap-2"
+              className="btn btn-primary w-full btn-lg mt-5 flex-center gap-2"
             >
               <CheckCircle2 size={18} />
               <span>
@@ -448,8 +436,8 @@ export function CheckoutModal({
               </span>
             </button>
 
-            <p className="checkout-security-notice text-xs text-muted text-center mt-3">
-              🔒 Ao confirmar, seu pedido será separado imediatamente no estoque da KronoPex e você receberá atualizações em tempo real.
+            <p className="checkout-security-notice text-xs text-muted text-center mt-3 leading-relaxed">
+              🔒 Ao confirmar, seu pedido será separado imediatamente no estoque da KronoPex e você receberá atualizações em tempo real pelo WhatsApp.
             </p>
           </div>
         </form>
