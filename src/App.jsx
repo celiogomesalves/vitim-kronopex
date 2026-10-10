@@ -305,6 +305,13 @@ export function App() {
 
   return (
     <div className="store-app-wrapper">
+      {/* Ambient Cyber Light System (Vibe Design Reference) */}
+      <div className="bg-ambient-lights" aria-hidden="true">
+        <div className="grid-bg-overlay"></div>
+        <div className="ambient-orb-top"></div>
+        <div className="ambient-orb-bottom"></div>
+      </div>
+
       {/* PWA Install Mobile Prompt */}
       <PwaInstallBanner />
 
