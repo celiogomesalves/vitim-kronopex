@@ -4,6 +4,7 @@ import { INITIAL_ORDERS } from '../data/mockOrders';
 import { INITIAL_STAFF } from '../data/mockUsers';
 import { INITIAL_PARTNERS, INITIAL_PARTNER_REQUESTS } from '../data/mockPartners';
 import { INITIAL_PAYMENT_METHODS } from '../data/mockPaymentMethods';
+import { AppwriteService } from './appwrite';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'kronopex_products',
@@ -27,9 +28,10 @@ const DEFAULT_CONFIG = {
   pixName: 'KronoPex Auto Peças LTDA',
   freeDeliveryThreshold: 200.00,
   defaultDeliveryFee: 15.00,
-  appwriteEndpoint: 'https://cloud.appwrite.io/v1',
-  appwriteProjectId: '',
-  appwriteDatabaseId: '',
+  appwriteEndpoint: 'https://appwrite.agenc-ia.net/v1',
+  appwriteProjectId: '6acb990e000fac38ac2f',
+  appwriteDatabaseId: 'kronopex_main',
+  appwriteBucketId: 'kronopex_storage',
   fcmVapidKey: '',
   googleAuthEnabled: true
 };
@@ -52,6 +54,10 @@ export const StorageService = {
   saveProducts: (products) => {
     localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
     window.dispatchEvent(new Event('kronopex_products_updated'));
+    // Persistência assíncrona no Appwrite
+    products.forEach((p) => {
+      AppwriteService.saveDocument('products', p.id, p).catch(() => {});
+    });
   },
 
   approveProduct: (productId) => {
@@ -84,6 +90,9 @@ export const StorageService = {
   saveCategories: (categories) => {
     localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
     window.dispatchEvent(new Event('kronopex_categories_updated'));
+    categories.forEach((c) => {
+      AppwriteService.saveDocument('categories', c.id, c).catch(() => {});
+    });
   },
 
   getPaymentMethods: () => {
@@ -98,6 +107,9 @@ export const StorageService = {
   savePaymentMethods: (methods) => {
     localStorage.setItem(STORAGE_KEYS.PAYMENT_METHODS, JSON.stringify(methods));
     window.dispatchEvent(new Event('kronopex_payments_updated'));
+    methods.forEach((pm) => {
+      AppwriteService.saveDocument('payment_methods', pm.id, pm).catch(() => {});
+    });
   },
 
   getCouriers: () => {
@@ -112,6 +124,9 @@ export const StorageService = {
   saveCouriers: (couriers) => {
     localStorage.setItem(STORAGE_KEYS.COURIERS, JSON.stringify(couriers));
     window.dispatchEvent(new Event('kronopex_couriers_updated'));
+    couriers.forEach((c) => {
+      AppwriteService.saveDocument('couriers', c.id, c).catch(() => {});
+    });
   },
 
   getOrders: () => {
@@ -126,6 +141,9 @@ export const StorageService = {
   saveOrders: (orders) => {
     localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
     window.dispatchEvent(new Event('kronopex_orders_updated'));
+    orders.forEach((o) => {
+      AppwriteService.saveDocument('orders', o.id, o).catch(() => {});
+    });
   },
 
   createOrder: (newOrder) => {
@@ -159,6 +177,9 @@ export const StorageService = {
   saveStaff: (staff) => {
     localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(staff));
     window.dispatchEvent(new Event('kronopex_staff_updated'));
+    staff.forEach((s) => {
+      AppwriteService.saveDocument('staff', s.id, s).catch(() => {});
+    });
   },
 
   getCurrentUser: () => {
@@ -190,6 +211,7 @@ export const StorageService = {
   saveConfig: (config) => {
     localStorage.setItem(STORAGE_KEYS.STORE_CONFIG, JSON.stringify(config));
     window.dispatchEvent(new Event('kronopex_config_updated'));
+    AppwriteService.saveDocument('store_config', 'main_config', config).catch(() => {});
   },
 
   getPartners: () => {
@@ -204,6 +226,9 @@ export const StorageService = {
   savePartners: (partners) => {
     localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(partners));
     window.dispatchEvent(new Event('kronopex_partners_updated'));
+    partners.forEach((p) => {
+      AppwriteService.saveDocument('partners', p.id, p).catch(() => {});
+    });
   },
 
   getPartnerRequests: () => {
@@ -218,6 +243,9 @@ export const StorageService = {
   savePartnerRequests: (requests) => {
     localStorage.setItem(STORAGE_KEYS.PARTNER_REQUESTS, JSON.stringify(requests));
     window.dispatchEvent(new Event('kronopex_partner_requests_updated'));
+    requests.forEach((r) => {
+      AppwriteService.saveDocument('partner_requests', r.id, r).catch(() => {});
+    });
   },
 
   submitPartnerRequest: (requestData) => {

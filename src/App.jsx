@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { StorageService } from './services/storage';
+import { AppwriteService } from './services/appwrite';
 import { FcmService } from './services/fcm';
 import { Navbar } from './components/Navbar';
 import { HeroShowcase } from './components/HeroShowcase';
@@ -141,6 +142,59 @@ export function App() {
     window.addEventListener('kronopex_couriers_updated', handleCouriersUpdated);
     window.addEventListener('kronopex_partners_updated', handlePartnersUpdated);
     window.addEventListener('kronopex_partner_requests_updated', handlePartnerRequestsUpdated);
+
+    // Sincronização automática em tempo real com Appwrite Cloud / Self-hosted
+    const syncFromAppwrite = async () => {
+      try {
+        const [remoteProducts, remoteCategories, remotePayments, remoteCouriers, remoteOrders, remoteStaff, remotePartners, remoteRequests] = await Promise.all([
+          AppwriteService.listDocuments('products'),
+          AppwriteService.listDocuments('categories'),
+          AppwriteService.listDocuments('payment_methods'),
+          AppwriteService.listDocuments('couriers'),
+          AppwriteService.listDocuments('orders'),
+          AppwriteService.listDocuments('staff'),
+          AppwriteService.listDocuments('partners'),
+          AppwriteService.listDocuments('partner_requests')
+        ]);
+
+        if (remoteProducts && remoteProducts.length > 0) {
+          StorageService.saveProducts(remoteProducts);
+          setProducts(remoteProducts);
+        }
+        if (remoteCategories && remoteCategories.length > 0) {
+          StorageService.saveCategories(remoteCategories);
+          setCategories(remoteCategories);
+        }
+        if (remotePayments && remotePayments.length > 0) {
+          StorageService.savePaymentMethods(remotePayments);
+          setPaymentMethods(remotePayments);
+        }
+        if (remoteCouriers && remoteCouriers.length > 0) {
+          StorageService.saveCouriers(remoteCouriers);
+          setCouriers(remoteCouriers);
+        }
+        if (remoteOrders && remoteOrders.length > 0) {
+          StorageService.saveOrders(remoteOrders);
+          setOrders(remoteOrders);
+        }
+        if (remoteStaff && remoteStaff.length > 0) {
+          StorageService.saveStaff(remoteStaff);
+          setStaff(remoteStaff);
+        }
+        if (remotePartners && remotePartners.length > 0) {
+          StorageService.savePartners(remotePartners);
+          setPartners(remotePartners);
+        }
+        if (remoteRequests && remoteRequests.length > 0) {
+          StorageService.savePartnerRequests(remoteRequests);
+          setPartnerRequests(remoteRequests);
+        }
+      } catch (err) {
+        console.warn('Sincronização em segundo plano Appwrite:', err);
+      }
+    };
+
+    syncFromAppwrite();
 
     return () => {
       window.removeEventListener('kronopex_products_updated', handleProductsUpdated);
