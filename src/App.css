@@ -4067,6 +4067,40 @@ select option,
   contain: layout style !important;
 }
 
+/* Trava de scroll de fundo para qualquer modal aberto via portal */
+body:has(.modal-backdrop-portal) {
+  overflow: hidden !important;
+}
+
+.modal-backdrop-portal {
+  overscroll-behavior: contain !important;
+}
+
+/* Badge de perfil do Admin com acabamento respirado e harmônico */
+.admin-user-badge-card {
+  margin-top: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+  padding: 1rem 1.15rem !important;
+  border-radius: 18px !important;
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(0, 210, 255, 0.2) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.admin-sidebar .btn-outline-primary {
+  margin-bottom: 1.5rem !important;
+  border-radius: 9999px !important;
+  padding: 0.65rem 1rem !important;
+  font-weight: 600 !important;
+  transition: all 0.25s ease !important;
+}
+
+.admin-sidebar .btn-outline-primary:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(0, 210, 255, 0.25) !important;
+}
+
+
 
 
 

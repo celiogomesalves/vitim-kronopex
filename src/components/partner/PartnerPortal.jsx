@@ -10,7 +10,8 @@ import {
   Trash2,
   Clock,
   CheckCircle2,
-  XCircle
+  XCircle,
+  X
 } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { ImageUploadSelector } from '../common/ImageUploadSelector';
@@ -504,22 +505,10 @@ export function PartnerPortal({
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
-                style={{
-                  width: '38px',
-                  height: '38px',
-                  borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.06)',
-                  border: '1px solid rgba(255, 255, 255, 0.12)',
-                  color: '#94a3b8',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  fontSize: '1rem',
-                  transition: 'all 0.2s'
-                }}
+                className="drawer-close-btn"
+                title="Fechar"
               >
-                ✕
+                <X size={18} />
               </button>
             </div>
 

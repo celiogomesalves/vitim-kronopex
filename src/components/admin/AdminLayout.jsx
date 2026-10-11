@@ -82,15 +82,15 @@ export function AdminLayout({
         </div>
 
         {/* Current Logged User Card */}
-        <div className="admin-user-badge-card glass-panel my-4 p-3">
+        <div className="admin-user-badge-card glass-panel mb-5 p-3.5">
           <div className="flex-center gap-3">
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
               className="admin-avatar-img"
             />
-            <div className="user-text-col">
-              <strong className="block text-xs text-main">{currentUser.name}</strong>
+            <div className="user-text-col" style={{ overflow: 'hidden' }}>
+              <strong className="block text-xs text-main truncate">{currentUser.name}</strong>
               <span className={`badge ${currentUser.role === 'admin' ? 'badge-admin' : currentUser.role === 'manager' ? 'badge-manager' : 'badge-operator'}`}>
                 {currentUser.roleName}
               </span>
@@ -102,7 +102,7 @@ export function AdminLayout({
         <button
           type="button"
           onClick={onBackToStore}
-          className="btn btn-outline-primary w-full btn-sm flex-center gap-2 mb-4"
+          className="btn btn-outline-primary w-full btn-sm flex-center gap-2 mb-5"
         >
           <Store size={16} />
           <span>Voltar para Vitrine da Loja</span>
@@ -154,7 +154,9 @@ export function AdminLayout({
           <div className="flex-center gap-2 text-xs text-muted">
             <span className="text-cyan font-semibold">KronoPex Gestão</span>
             <ChevronRight size={14} />
-            <span className="text-main font-bold capitalize">{activeTab}</span>
+            <span className="text-main font-bold">
+              {navItems.find((n) => n.id === activeTab)?.label || 'Painel Geral'}
+            </span>
           </div>
 
           <div className="flex-center gap-4">
