@@ -96,6 +96,57 @@ export const AppwriteService = {
     }
   },
 
+  // Login com E-mail e Senha (Appwrite Auth)
+  loginWithEmail: async (email, password) => {
+    try {
+      // Se houver sessão ativa, remove antes para evitar conflito de sessão
+      try {
+        await account.deleteSession('current');
+      } catch {
+        // Ignora se não houver sessão prévia
+      }
+      const session = await account.createEmailPasswordSession(email.trim(), password);
+      const user = await account.get();
+      return { session, user };
+    } catch (error) {
+      console.error('[Appwrite] Erro ao autenticar com e-mail e senha:', error);
+      throw error;
+    }
+  },
+
+  // Cadastro de Novo Usuário / Administrador no Appwrite
+  createAccount: async (email, password, name) => {
+    try {
+      const user = await account.create(ID.unique(), email.trim(), password, name.trim());
+      // Já autentica automaticamente o usuário recém-criado
+      const session = await account.createEmailPasswordSession(email.trim(), password);
+      return { user, session };
+    } catch (error) {
+      console.error('[Appwrite] Erro ao cadastrar conta no Appwrite:', error);
+      throw error;
+    }
+  },
+
+  // Solicitar Recuperação de Senha (Dispara e-mail com template do Appwrite)
+  createPasswordRecovery: async (email, redirectUrl = `${window.location.origin}${window.location.pathname}?mode=recovery`) => {
+    try {
+      return await account.createRecovery(email.trim(), redirectUrl);
+    } catch (error) {
+      console.error('[Appwrite] Erro ao solicitar recuperação de senha:', error);
+      throw error;
+    }
+  },
+
+  // Concluir Redefinição de Senha via Token recebido no e-mail
+  completePasswordRecovery: async (userId, secret, newPassword) => {
+    try {
+      return await account.updateRecovery(userId, secret, newPassword, newPassword);
+    } catch (error) {
+      console.error('[Appwrite] Erro ao redefinir senha com token:', error);
+      throw error;
+    }
+  },
+
   // Google OAuth Login
   loginWithGoogle: async (successUrl = window.location.href, failureUrl = window.location.href) => {
     try {
@@ -131,3 +182,4 @@ export const AppwriteService = {
     }
   }
 };
+

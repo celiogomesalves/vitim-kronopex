@@ -1,35 +1,6 @@
-export const INITIAL_STAFF = [
-  {
-    id: 'user-01',
-    name: 'Célio Gomes Alves',
-    email: 'celio.master@kronopex.com.br',
-    role: 'admin', // 'admin' | 'manager' | 'operator'
-    roleName: 'Administrador Master',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80',
-    permissions: ['all']
-  },
-  {
-    id: 'user-02',
-    name: 'Amanda Vasconcelos',
-    email: 'amanda.gerente@kronopex.com.br',
-    role: 'manager',
-    roleName: 'Gerente Comercial & Estoque',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=120&auto=format&fit=crop&q=80',
-    permissions: ['products_read', 'products_write', 'orders_manage', 'couriers_manage', 'reports_view']
-  },
-  {
-    id: 'user-03',
-    name: 'Lucas Ferreira',
-    email: 'lucas.expedicao@kronopex.com.br',
-    role: 'operator',
-    roleName: 'Operador de Expedição',
-    status: 'active',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
-    permissions: ['orders_read', 'orders_status_update', 'couriers_view']
-  }
-];
+// Início real de produção: lista de equipe zerada.
+// O sistema exige o cadastro do primeiro Administrador Master para liberação da loja.
+export const INITIAL_STAFF = [];
 
 export const ROLE_DEFINITIONS = {
   admin: {

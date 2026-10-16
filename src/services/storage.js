@@ -17,7 +17,8 @@ const STORAGE_KEYS = {
   PARTNER_REQUESTS: 'kronopex_partner_requests',
   CART: 'kronopex_cart',
   CURRENT_USER: 'kronopex_current_user',
-  STORE_CONFIG: 'kronopex_store_config'
+  STORE_CONFIG: 'kronopex_store_config',
+  PROD_INITIALIZED: 'kronopex_prod_v1'
 };
 
 const DEFAULT_CONFIG = {
@@ -33,8 +34,29 @@ const DEFAULT_CONFIG = {
   appwriteDatabaseId: 'kronopex_main',
   appwriteBucketId: 'kronopex_storage',
   fcmVapidKey: '',
-  googleAuthEnabled: true
+  googleAuthEnabled: true,
+  // Integração Mercado Pago
+  mpPublicKey: '',
+  mpAccessToken: '',
+  mpSandbox: true
 };
+
+// Rotina de limpeza de dados legados fictícios
+try {
+  if (typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEYS.PROD_INITIALIZED) !== 'true') {
+    // Limpa mocks fictícios legados para iniciar em produção real
+    localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    localStorage.removeItem(STORAGE_KEYS.COURIERS);
+    localStorage.removeItem(STORAGE_KEYS.STAFF);
+    localStorage.removeItem(STORAGE_KEYS.PARTNERS);
+    localStorage.removeItem(STORAGE_KEYS.PARTNER_REQUESTS);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    localStorage.setItem(STORAGE_KEYS.PROD_INITIALIZED, 'true');
+  }
+} catch {
+  // Ignora se localStorage não estiver disponível
+}
 
 export const StorageService = {
   getProducts: () => {
@@ -310,17 +332,17 @@ export const StorageService = {
     StorageService.savePartnerRequests(updated);
   },
 
-  // Reset to initial state for demo testing
-  resetDemoData: () => {
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(INITIAL_PRODUCTS));
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(INITIAL_CATEGORIES));
-    localStorage.setItem(STORAGE_KEYS.PAYMENT_METHODS, JSON.stringify(INITIAL_PAYMENT_METHODS));
-    localStorage.setItem(STORAGE_KEYS.COURIERS, JSON.stringify(INITIAL_COURIERS));
-    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(INITIAL_ORDERS));
-    localStorage.setItem(STORAGE_KEYS.STAFF, JSON.stringify(INITIAL_STAFF));
-    localStorage.setItem(STORAGE_KEYS.PARTNERS, JSON.stringify(INITIAL_PARTNERS));
-    localStorage.setItem(STORAGE_KEYS.PARTNER_REQUESTS, JSON.stringify(INITIAL_PARTNER_REQUESTS));
-    localStorage.setItem(STORAGE_KEYS.STORE_CONFIG, JSON.stringify(DEFAULT_CONFIG));
+  // Limpa todos os dados para início zerado de produção
+  clearAllData: () => {
+    localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+    localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
+    localStorage.removeItem(STORAGE_KEYS.PAYMENT_METHODS);
+    localStorage.removeItem(STORAGE_KEYS.COURIERS);
+    localStorage.removeItem(STORAGE_KEYS.ORDERS);
+    localStorage.removeItem(STORAGE_KEYS.STAFF);
+    localStorage.removeItem(STORAGE_KEYS.PARTNERS);
+    localStorage.removeItem(STORAGE_KEYS.PARTNER_REQUESTS);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     window.location.reload();
   }
 };

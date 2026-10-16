@@ -13,6 +13,7 @@ import {
   FileText
 } from 'lucide-react';
 import { StorageService } from '../services/storage';
+import { MercadoPagoService } from '../services/mercadopago';
 import { formatCurrency, formatPhone, formatCEP } from '../utils/formatters';
 
 export function CheckoutModal({
@@ -88,7 +89,7 @@ export function CheckoutModal({
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
 
@@ -107,8 +108,27 @@ export function CheckoutModal({
 
     setIsSubmitting(true);
 
+    const orderId = `KP-${Math.floor(1000 + Math.random() * 9000)}`;
+    const paymentType = currentPayment?.type || 'pix';
+
+    let pixData = null;
+    if (paymentType === 'pix') {
+      try {
+        pixData = await MercadoPagoService.createPixPayment({
+          orderId,
+          amount: total,
+          customer: {
+            name: formData.name,
+            phone: formData.phone
+          }
+        });
+      } catch (pixErr) {
+        console.warn('Erro ao gerar pagamento PIX dinâmico:', pixErr);
+      }
+    }
+
     const generatedOrder = {
-      id: `KP-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: orderId,
       createdAt: new Date().toISOString(),
       customer: {
         name: formData.name,
@@ -128,18 +148,17 @@ export function CheckoutModal({
       subtotal,
       deliveryFee,
       total,
-      paymentMethod: currentPayment?.type || 'pix',
+      paymentMethod: paymentType,
       paymentMethodName: currentPayment?.name || 'PIX',
       cashChangeFor: formData.cashChangeFor,
       status: 'pending',
       courierId: null,
-      notes: formData.notes
+      notes: formData.notes,
+      pixData: pixData
     };
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onOrderCompleted(generatedOrder);
-    }, 600);
+    setIsSubmitting(false);
+    onOrderCompleted(generatedOrder);
   };
 
   const getMethodIcon = (type) => {

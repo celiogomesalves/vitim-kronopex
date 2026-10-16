@@ -13,6 +13,7 @@ import { OrderSuccessModal } from './components/OrderSuccessModal';
 import { Footer } from './components/Footer';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
+import { InitialAdminSetup } from './components/admin/InitialAdminSetup';
 import { PartnerApplicationModal } from './components/PartnerApplicationModal';
 import { PartnerPortal } from './components/partner/PartnerPortal';
 import { PwaInstallBanner } from './components/mobile/PwaInstallBanner';
@@ -34,6 +35,7 @@ export function App() {
   // Current session & view
   const [currentUser, setCurrentUser] = useState(() => StorageService.getCurrentUser());
   const [viewMode, setViewMode] = useState('store'); // 'store' | 'admin'
+  const [recoveryParams, setRecoveryParams] = useState(null);
 
   // Storefront UI state
   const [searchTerm, setSearchTerm] = useState('');
@@ -142,6 +144,38 @@ export function App() {
     window.addEventListener('kronopex_couriers_updated', handleCouriersUpdated);
     window.addEventListener('kronopex_partners_updated', handlePartnersUpdated);
     window.addEventListener('kronopex_partner_requests_updated', handlePartnerRequestsUpdated);
+
+    // Checagem de link de recuperação de senha enviado pelo Appwrite
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const secret = urlParams.get('secret');
+    if (userId && secret) {
+      setRecoveryParams({ userId, secret });
+      setIsAdminLoginOpen(true);
+    }
+
+    // Checagem de retorno do Google OAuth para Setup Inicial do Administrador Master
+    AppwriteService.getCurrentUser().then((authUser) => {
+      if (authUser && localStorage.getItem('kronopex_pending_master_setup') === 'true') {
+        localStorage.removeItem('kronopex_pending_master_setup');
+        const masterAdmin = {
+          id: authUser.$id,
+          name: authUser.name || authUser.email.split('@')[0],
+          email: authUser.email.toLowerCase(),
+          role: 'admin',
+          roleName: 'Administrador Master',
+          status: 'active',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.name || authUser.email)}&background=00d2ff&color=050d1a&bold=true`,
+          permissions: ['all'],
+          createdAt: new Date().toISOString()
+        };
+        StorageService.saveStaff([masterAdmin]);
+        StorageService.setCurrentUser(masterAdmin);
+        setStaff([masterAdmin]);
+        setCurrentUser(masterAdmin);
+        setViewMode('admin');
+      }
+    }).catch(() => {});
 
     // Sincronização automática em tempo real com Appwrite Cloud / Self-hosted
     const syncFromAppwrite = async () => {
@@ -312,7 +346,12 @@ export function App() {
     setViewMode('admin');
   };
 
-  const handleLogoutAdmin = () => {
+  const handleLogoutAdmin = async () => {
+    try {
+      await AppwriteService.logout();
+    } catch {
+      // Ignora erro se não houver sessão ativa
+    }
     StorageService.setCurrentUser(null);
     setCurrentUser(null);
     setViewMode('store');
@@ -406,6 +445,19 @@ export function App() {
       el.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Regra de Bloqueio do Sistema: Se não houver administrador cadastrado, a vitrine fica indisponível para usuários comuns
+  if (staff.length === 0) {
+    return (
+      <InitialAdminSetup
+        onSetupComplete={(masterAdmin) => {
+          setStaff([masterAdmin]);
+          setCurrentUser(masterAdmin);
+          setViewMode('admin');
+        }}
+      />
+    );
+  }
 
   // View: Partner Portal (Dedicated supplier view)
   if (viewMode === 'admin' && currentUser?.role === 'partner') {
@@ -597,8 +649,12 @@ export function App() {
       {/* Admin Login & Profile Switcher Modal */}
       <AdminLoginModal
         isOpen={isAdminLoginOpen}
-        onClose={() => setIsAdminLoginOpen(false)}
+        onClose={() => {
+          setIsAdminLoginOpen(false);
+          setRecoveryParams(null);
+        }}
         onLoginSuccess={handleLoginSuccess}
+        recoveryParams={recoveryParams}
       />
 
       {/* Partner Application Modal (Marketplace Onboarding) */}

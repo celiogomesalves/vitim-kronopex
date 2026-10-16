@@ -4264,6 +4264,98 @@ body:has(.modal-backdrop-portal) {
   }
 }
 
+/* ==========================================================================
+   Initial Admin Setup & Lock Screen
+   ========================================================================== */
+.initial-setup-backdrop {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at 50% 20%, #0d1e38 0%, #050b14 70%, #02060d 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.initial-setup-backdrop::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(0, 210, 255, 0.12) 0%, transparent 70%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.initial-setup-card {
+  width: 100%;
+  max-width: 500px;
+  background: rgba(13, 21, 36, 0.92);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 28px;
+  padding: 2.5rem 2.25rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(0, 210, 255, 0.12);
+  position: relative;
+  z-index: 2;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.badge-shield-pulse {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(0, 210, 255, 0.1);
+  border: 1px solid rgba(0, 210, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulseNeon 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseNeon {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(0, 210, 255, 0.45);
+    transform: scale(1.05);
+  }
+}
+
+.setup-alert-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted, #718096);
+  font-size: 0.75rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-divider span {
+  padding: 0 0.75rem;
+}
+
+
 
 
 
