@@ -98,9 +98,19 @@ export function Footer({ onOpenAdmin, onOpenPartnerModal, currentUser }) {
       <div className="footer-bottom-bar text-center text-xs text-muted border-top">
         <div className="container flex-between py-3">
           <span>&copy; {new Date().getFullYear()} KronoPex Auto Peças & Delivery. Todos os direitos reservados.</span>
-          <span className="flex-center gap-1">
-            Plataforma Integrada AppWrite & FCM
-          </span>
+          <div className="flex-center gap-3">
+            <a href="/privacidade.html" target="_blank" rel="noopener noreferrer" className="hover-underline text-muted">
+              Privacidade
+            </a>
+            <span>•</span>
+            <a href="/termos.html" target="_blank" rel="noopener noreferrer" className="hover-underline text-muted">
+              Termos de Uso
+            </a>
+            <span>•</span>
+            <span className="flex-center gap-1">
+              Plataforma Appwrite & FCM
+            </span>
+          </div>
         </div>
       </div>
     </footer>
