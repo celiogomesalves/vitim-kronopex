@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { SmartPagination } from '../common/SmartPagination';
+import { EmptyState } from '../common/EmptyState';
 import { formatCurrency, formatPhone, formatCNPJ } from '../../utils/formatters';
 
 export function AdminPartners({
@@ -274,11 +275,12 @@ export function AdminPartners({
       {activeTab === 'requests' && (
         <div className="partner-tab-content">
           {pendingRequests.length === 0 ? (
-            <div className="glass-panel text-center py-16 text-muted text-xs">
-              <CheckCircle2 size={40} className="mx-auto mb-3 text-cyan opacity-40" />
-              <strong className="text-sm block text-main mb-1">Nenhuma solicitação pendente</strong>
-              Todas as propostas de distribuidores já foram avaliadas pela equipe.
-            </div>
+            <EmptyState
+              icon={CheckCircle2}
+              badgeText="Triagem de Fornecedores"
+              title="Nenhuma Solicitação Pendente"
+              description="Todas as propostas de distribuidores e parceiros já foram analisadas. Novas solicitações de credenciamento enviadas pelo site aparecerão aqui para homologação técnica e comercial."
+            />
           ) : (
             <>
               <div className="partner-requests-grid mb-6">
@@ -402,28 +404,31 @@ export function AdminPartners({
 
       {/* TAB 2: Fornecedores Ativos */}
       {activeTab === 'active' && (
-        <div className="admin-table-wrapper glass-panel">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Distribuidor / Parceiro</th>
-                <th>CNPJ & Cidade</th>
-                <th>Comissão KronoPex (%)</th>
-                <th>Total Vendido</th>
-                <th>Saldo a Repassar</th>
-                <th>Status</th>
-                <th className="text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedPartners.length === 0 ? (
+        partners.length === 0 ? (
+          <EmptyState
+            icon={Building2}
+            badgeText="Rede de Distribuidores"
+            title="Nenhum Fornecedor Ativo"
+            description="Você ainda não possui fornecedores parceiros homologados. Assim que aprovar solicitações de cadastro, os distribuidores aparecerão aqui com taxas de comissão personalizadas e métricas de desempenho."
+            actionText="Ver Solicitações de Parceria"
+            onAction={() => setActiveTab('requests')}
+          />
+        ) : (
+          <div className="admin-table-wrapper glass-panel">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-muted text-xs">
-                    Nenhum fornecedor ativo no momento.
-                  </td>
+                  <th>Distribuidor / Parceiro</th>
+                  <th>CNPJ & Cidade</th>
+                  <th>Comissão KronoPex (%)</th>
+                  <th>Total Vendido</th>
+                  <th>Saldo a Repassar</th>
+                  <th>Status</th>
+                  <th className="text-right">Ações</th>
                 </tr>
-              ) : (
-                paginatedPartners.map((partner) => (
+              </thead>
+              <tbody>
+                {paginatedPartners.map((partner) => (
                   <tr key={partner.id}>
                     <td>
                       <div>
@@ -494,80 +499,89 @@ export function AdminPartners({
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ))}
+              </tbody>
+            </table>
 
-          {/* Paginação de Parceiros Ativos */}
-          {totalActivePages > 1 && (
-            <div className="p-4 border-top">
-              <SmartPagination
-                currentPage={activePartnersPage}
-                totalPages={totalActivePages}
-                totalItems={partners.length}
-                itemsPerPage={8}
-                onPageChange={setActivePartnersPage}
-              />
-            </div>
-          )}
-        </div>
+            {/* Paginação de Parceiros Ativos */}
+            {totalActivePages > 1 && (
+              <div className="p-4 border-top">
+                <SmartPagination
+                  currentPage={activePartnersPage}
+                  totalPages={totalActivePages}
+                  totalItems={partners.length}
+                  itemsPerPage={8}
+                  onPageChange={setActivePartnersPage}
+                />
+              </div>
+            )}
+          </div>
+        )
       )}
 
       {/* TAB 3: Extrato Financeiro & Split */}
       {activeTab === 'financial' && (
-        <div className="admin-table-wrapper glass-panel p-5">
-          <div className="mb-4">
-            <h3 className="font-bold text-sm text-main">Extrato de Vendas & Comissões de Fornecedores</h3>
-            <p className="text-xs text-muted">
-              Divisão automática de valores transacionados na loja e montantes a liquidar via PIX
-            </p>
+        partners.length === 0 ? (
+          <EmptyState
+            icon={DollarSign}
+            badgeText="Extrato Financeiro & Split"
+            title="Sem Movimentações de Fornecedores"
+            description="Nenhuma transação financeira com fornecedores registrada até o momento. Quando peças anunciadas por parceiros forem compradas na loja, o split automático e os repasses via PIX serão gerados aqui."
+          />
+        ) : (
+          <div className="admin-table-wrapper glass-panel p-5">
+            <div className="mb-4">
+              <h3 className="font-bold text-sm text-main">Extrato de Vendas & Comissões de Fornecedores</h3>
+              <p className="text-xs text-muted">
+                Divisão automática de valores transacionados na loja e montantes a liquidar via PIX
+              </p>
+            </div>
+
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Fornecedor</th>
+                  <th>Chave PIX de Repasse</th>
+                  <th>Vendas Brutas (GMV)</th>
+                  <th>Taxa KronoPex</th>
+                  <th>Lucro KronoPex Retido</th>
+                  <th>Valor Líquido a Repassar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partners.map((partner) => {
+                  const sold = partner.metrics?.totalSold || 0;
+                  const retained = partner.metrics?.commissionRetained || (sold * (partner.commissionRate / 100));
+                  const payout = partner.metrics?.payoutDue || (sold - retained);
+
+                  return (
+                    <tr key={partner.id}>
+                      <td>
+                        <strong className="text-xs text-main block">{partner.tradeName}</strong>
+                        <span className="text-xs text-muted">{partner.companyName}</span>
+                      </td>
+                      <td>
+                        <span className="font-mono text-xs text-cyan">{partner.pixKey}</span>
+                      </td>
+                      <td>
+                        <strong className="text-xs text-main">{formatCurrency(sold)}</strong>
+                      </td>
+                      <td>
+                        <span className="badge badge-express">{partner.commissionRate}%</span>
+                      </td>
+                      <td>
+                        <strong className="text-xs text-green">{formatCurrency(retained)}</strong>
+                      </td>
+                      <td>
+                        <strong className="text-xs text-warning">{formatCurrency(payout)}</strong>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Fornecedor</th>
-                <th>Chave PIX de Repasse</th>
-                <th>Vendas Brutas (GMV)</th>
-                <th>Taxa KronoPex</th>
-                <th>Lucro KronoPex Retido</th>
-                <th>Valor Líquido a Repassar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {partners.map((partner) => {
-                const sold = partner.metrics?.totalSold || 0;
-                const retained = partner.metrics?.commissionRetained || (sold * (partner.commissionRate / 100));
-                const payout = partner.metrics?.payoutDue || (sold - retained);
-
-                return (
-                  <tr key={partner.id}>
-                    <td>
-                      <strong className="text-xs text-main block">{partner.tradeName}</strong>
-                      <span className="text-xs text-muted">{partner.companyName}</span>
-                    </td>
-                    <td>
-                      <span className="font-mono text-xs text-cyan">{partner.pixKey}</span>
-                    </td>
-                    <td>
-                      <strong className="text-xs text-main">{formatCurrency(sold)}</strong>
-                    </td>
-                    <td>
-                      <span className="badge badge-express">{partner.commissionRate}%</span>
-                    </td>
-                    <td>
-                      <strong className="text-xs text-green">{formatCurrency(retained)}</strong>
-                    </td>
-                    <td>
-                      <strong className="text-xs text-warning">{formatCurrency(payout)}</strong>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        )
       )}
 
       {/* Modal de Aprovação de Solicitação via Portal */}

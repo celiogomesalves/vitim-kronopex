@@ -18,6 +18,7 @@ import { ConfirmationModal } from '../common/ConfirmationModal';
 import { ImageUploadSelector } from '../common/ImageUploadSelector';
 import { SmartPagination } from '../common/SmartPagination';
 import { QuickCategoryModal } from '../common/QuickCategoryModal';
+import { EmptyState } from '../common/EmptyState';
 import {
   formatCurrency,
   maskCurrencyInput,
@@ -376,29 +377,45 @@ export function AdminProducts({
             </div>
           </div>
 
-          {/* Products Table */}
-          <div className="admin-table-wrapper glass-panel">
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Peça / Produto</th>
-                  <th>Origem</th>
-                  <th>Categoria</th>
-                  <th>Código OEM</th>
-                  <th>Preço de Venda</th>
-                  <th>Estoque</th>
-                  {canEdit && <th className="text-right">Ações</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedInventoryProducts.length === 0 ? (
+          {/* Products Table or Empty State */}
+          {products.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              badgeText="Catálogo de Peças"
+              title="Nenhuma Peça Cadastrada no Estoque"
+              description="Seu inventário de peças está vazio no momento. Cadastre novas peças manuais ou importe lotes para disponibilizar aos seus clientes na vitrine digital."
+              actionText={canEdit ? 'Cadastrar Primeira Peça' : undefined}
+              onAction={canEdit ? () => handleOpenCreate() : undefined}
+            />
+          ) : filteredProducts.length === 0 ? (
+            <EmptyState
+              icon={Search}
+              badgeText="Busca Sem Resultados"
+              title="Nenhuma Peça Encontrada"
+              description="Nenhuma peça correspondeu aos critérios pesquisados. Tente alterar os termos da busca ou selecionar outra categoria no filtro."
+              actionText="Limpar Filtros de Busca"
+              onAction={() => {
+                setSearchTerm('');
+                setCategoryFilter('all');
+                setInventoryPage(1);
+              }}
+            />
+          ) : (
+            <div className="admin-table-wrapper glass-panel">
+              <table className="admin-table">
+                <thead>
                   <tr>
-                    <td colSpan={7} className="text-center py-10 text-muted text-xs">
-                      Nenhuma peça encontrada com os filtros selecionados.
-                    </td>
+                    <th>Peça / Produto</th>
+                    <th>Origem</th>
+                    <th>Categoria</th>
+                    <th>Código OEM</th>
+                    <th>Preço de Venda</th>
+                    <th>Estoque</th>
+                    {canEdit && <th className="text-right">Ações</th>}
                   </tr>
-                ) : (
-                  paginatedInventoryProducts.map((p) => {
+                </thead>
+                <tbody>
+                  {paginatedInventoryProducts.map((p) => {
                     const isLow = p.stock <= p.minStock;
                     return (
                       <tr key={p.id}>
@@ -483,8 +500,7 @@ export function AdminProducts({
                         )}
                       </tr>
                     );
-                  })
-                )}
+                  })}
               </tbody>
             </table>
 
@@ -501,6 +517,7 @@ export function AdminProducts({
               </div>
             )}
           </div>
+          )}
         </>
       )}
 
@@ -508,11 +525,12 @@ export function AdminProducts({
       {activeTab === 'moderation' && (
         <div className="moderation-container">
           {pendingPartnerProducts.length === 0 ? (
-            <div className="glass-panel text-center py-12 text-muted text-xs">
-              <CheckCircle2 size={40} className="mx-auto mb-3 text-cyan opacity-40" />
-              <strong className="text-sm block text-main mb-1">Tudo em dia!</strong>
-              Nenhum produto enviado por fornecedores aguardando aprovação no momento.
-            </div>
+            <EmptyState
+              icon={CheckCircle2}
+              badgeText="Moderação em Dia"
+              title="Fila de Análise Vazia"
+              description="Nenhum produto enviado por fornecedores ou parceiros aguardando aprovação no momento. Quando um distribuidor cadastrar novas peças, elas aparecerão aqui para verificação técnica e precificação."
+            />
           ) : (
             <>
               <div className="admin-grid-cards mb-4">

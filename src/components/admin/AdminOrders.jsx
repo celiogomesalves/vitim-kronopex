@@ -5,11 +5,16 @@ import {
   MapPin,
   Phone,
   User,
-  ChevronRight
+  ChevronRight,
+  ShoppingBag,
+  Truck,
+  Bell,
+  Sparkles
 } from 'lucide-react';
 import { FcmService } from '../../services/fcm';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { SmartPagination } from '../common/SmartPagination';
+import { EmptyState } from '../common/EmptyState';
 import { formatCurrency, formatPhone, formatDateTime } from '../../utils/formatters';
 
 const ORDERS_PER_PAGE = 8;
@@ -171,73 +176,88 @@ export function AdminOrders({
         ))}
       </div>
 
-      {/* Orders Grid Layout */}
-      <div className="orders-admin-layout">
-        {/* Orders Cards List */}
-        <div className="orders-cards-col space-y-3">
-          {filteredOrders.length === 0 ? (
-            <div className="glass-panel text-center py-10 text-muted text-xs">
-              Nenhum pedido encontrado nesta etapa.
-            </div>
-          ) : (
-            <>
-              {paginatedOrders.map((order) => {
-                const isSelected = selectedOrder?.id === order.id;
+      {/* Se não houver nenhum pedido cadastrado no sistema */}
+      {orders.length === 0 ? (
+        <EmptyState
+          icon={ShoppingBag}
+          badgeText="Expedição KronoPex em Prontidão"
+          title="Nenhum Pedido Registrado no Momento"
+          description="Sua esteira de expedição está 100% ativa e pronta para operar. Assim que um cliente finalizar a compra pela vitrine ou via WhatsApp, o pedido aparecerá aqui automaticamente com alertas sonoros e notificações em tempo real para separação e despacho."
+          perks={[
+            { label: 'Notificações Push e Som em Tempo Real', icon: Bell },
+            { label: 'Despacho Rápido via Motoboy / Furgão', icon: Truck },
+            { label: 'Integração Direta com WhatsApp do Cliente', icon: MessageCircle }
+          ]}
+        />
+      ) : filteredOrders.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          badgeText="Filtro Ativo"
+          title="Nenhum Pedido Encontrado nesta Etapa"
+          description="Não há pedidos cadastrados com este status no momento. Alterne de etapa ou visualize todos os pedidos da sua expedição."
+          actionText="Exibir Todos os Pedidos"
+          onAction={() => setStatusFilter('all')}
+        />
+      ) : (
+        /* Orders Grid Layout */
+        <div className="orders-admin-layout">
+          {/* Orders Cards List */}
+          <div className="orders-cards-col space-y-3">
+            {paginatedOrders.map((order) => {
+              const isSelected = selectedOrder?.id === order.id;
 
-                return (
-                  <div
-                    key={order.id}
-                    onClick={() => setSelectedOrder(order)}
-                    className={`order-admin-card glass-panel p-4 ${isSelected ? 'selected' : ''}`}
-                  >
-                    <div className="order-card-head flex-between">
-                      <div className="flex-center gap-2">
-                        <span className="font-mono font-bold text-cyan text-sm">
-                          #{order.id}
-                        </span>
-                        {getStatusBadge(order.status)}
-                      </div>
-                      <span className="text-xs text-muted">
-                        {formatDateTime(order.createdAt)}
+              return (
+                <div
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className={`order-admin-card glass-panel p-4 ${isSelected ? 'selected' : ''}`}
+                >
+                  <div className="order-card-head flex-between">
+                    <div className="flex-center gap-2">
+                      <span className="font-mono font-bold text-cyan text-sm">
+                        #{order.id}
                       </span>
+                      {getStatusBadge(order.status)}
+                    </div>
+                    <span className="text-xs text-muted">
+                      {formatDateTime(order.createdAt)}
+                    </span>
+                  </div>
+
+                  <div className="order-card-body mt-3">
+                    <strong className="text-sm block text-main">{order.customer.name}</strong>
+                    <div className="flex-center gap-1 text-xs text-muted mt-1">
+                      <MapPin size={12} className="text-cyan" />
+                      <span>{order.customer.neighborhood} - {order.customer.city}</span>
                     </div>
 
-                    <div className="order-card-body mt-3">
-                      <strong className="text-sm block text-main">{order.customer.name}</strong>
-                      <div className="flex-center gap-1 text-xs text-muted mt-1">
-                        <MapPin size={12} className="text-cyan" />
-                        <span>{order.customer.neighborhood} - {order.customer.city}</span>
-                      </div>
-
-                      <div className="order-card-items-snippet mt-2 text-xs text-muted line-clamp-1">
-                        {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
-                      </div>
-                    </div>
-
-                    <div className="order-card-foot flex-between mt-3 pt-3 border-top text-xs">
-                      <span className="font-bold text-main">
-                        {formatCurrency(order.total)} ({order.paymentMethodName || order.paymentMethod?.toUpperCase()})
-                      </span>
-                      <span className="text-cyan flex-center gap-1">
-                        <span>Ver detalhes</span>
-                        <ChevronRight size={13} />
-                      </span>
+                    <div className="order-card-items-snippet mt-2 text-xs text-muted line-clamp-1">
+                      {order.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
                     </div>
                   </div>
-                );
-              })}
 
-              <SmartPagination
-                currentPage={currentOrderPage}
-                totalPages={totalOrderPages}
-                totalItems={filteredOrders.length}
-                itemsPerPage={ORDERS_PER_PAGE}
-                onPageChange={setOrdersPage}
-                label="pedidos"
-              />
-            </>
-          )}
-        </div>
+                  <div className="order-card-foot flex-between mt-3 pt-3 border-top text-xs">
+                    <span className="font-bold text-main">
+                      {formatCurrency(order.total)} ({order.paymentMethodName || order.paymentMethod?.toUpperCase()})
+                    </span>
+                    <span className="text-cyan flex-center gap-1">
+                      <span>Ver detalhes</span>
+                      <ChevronRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            <SmartPagination
+              currentPage={currentOrderPage}
+              totalPages={totalOrderPages}
+              totalItems={filteredOrders.length}
+              itemsPerPage={ORDERS_PER_PAGE}
+              onPageChange={setOrdersPage}
+              label="pedidos"
+            />
+          </div>
 
         {/* Selected Order Details Panel */}
         <div className="order-details-col">
@@ -368,13 +388,27 @@ export function AdminOrders({
               </div>
             </div>
           ) : (
-            <div className="glass-panel text-center py-16 text-muted text-xs">
-              <Package size={36} className="mx-auto mb-3 text-cyan opacity-40" />
-              Selecione um pedido ao lado para visualizar os detalhes e despachar com o motoboy.
+            <div className="glass-panel text-center py-16 px-6 flex-center flex-column gap-3">
+              <div
+                className="w-14 h-14 rounded-full flex-center mx-auto"
+                style={{
+                  background: 'rgba(0, 245, 160, 0.08)',
+                  border: '1px solid rgba(0, 245, 160, 0.25)'
+                }}
+              >
+                <Package size={26} className="text-cyan" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-main mb-1">Nenhum Pedido Selecionado</h4>
+                <p className="text-xs text-muted max-w-xs mx-auto">
+                  Clique em um pedido da lista à esquerda para revisar os itens, alterar status ou atribuir um motoboy.
+                </p>
+              </div>
             </div>
           )}
         </div>
       </div>
+      )}
 
       {/* Confirmação Universal */}
       <ConfirmationModal

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Truck, Plus, Phone, Trash2, CheckCircle2, Star, UserCheck, X } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
+import { EmptyState } from '../common/EmptyState';
 import { formatPhone } from '../../utils/formatters';
 
 export function AdminCouriers({ couriers, onSaveCouriers, canEdit = true }) {
@@ -101,78 +102,89 @@ export function AdminCouriers({ couriers, onSaveCouriers, canEdit = true }) {
         )}
       </div>
 
-      {/* Couriers Cards Grid */}
-      <div className="couriers-cards-grid">
-        {couriers.map((courier) => {
-          const isAvailable = courier.status === 'available';
-          const isDelivering = courier.status === 'delivering';
+      {/* Couriers Cards Grid or Empty State */}
+      {couriers.length === 0 ? (
+        <EmptyState
+          icon={Truck}
+          badgeText="Frota de Entrega Expressa"
+          title="Nenhum Entregador Cadastrado"
+          description="Cadastre motoboys e motoristas de utilitários para despachar pedidos diretamente para oficinas mecânicas e clientes finais com agilidade e rastreio em tempo real."
+          actionText={canEdit ? 'Cadastrar Primeiro Entregador' : undefined}
+          onAction={canEdit ? () => setIsModalOpen(true) : undefined}
+        />
+      ) : (
+        <div className="couriers-cards-grid">
+          {couriers.map((courier) => {
+            const isAvailable = courier.status === 'available';
+            const isDelivering = courier.status === 'delivering';
 
-          return (
-            <div key={courier.id} className="courier-card glass-panel p-5">
-              <div className="courier-head flex-between mb-3">
-                <div className="flex-center gap-3">
-                  <div className="courier-avatar-box p-3 rounded-lg bg-surface">
-                    <Truck size={20} className="text-cyan" />
+            return (
+              <div key={courier.id} className="courier-card glass-panel p-5">
+                <div className="courier-head flex-between mb-3">
+                  <div className="flex-center gap-3">
+                    <div className="courier-avatar-box p-3 rounded-lg bg-surface">
+                      <Truck size={20} className="text-cyan" />
+                    </div>
+                    <div>
+                      <strong className="text-sm block text-main">{courier.name}</strong>
+                      <span className="text-xs text-muted flex-center gap-1">
+                        <Phone size={12} /> {formatPhone(courier.phone)}
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <strong className="text-sm block text-main">{courier.name}</strong>
-                    <span className="text-xs text-muted flex-center gap-1">
-                      <Phone size={12} /> {formatPhone(courier.phone)}
-                    </span>
-                  </div>
+
+                  <span
+                    className={`badge ${
+                      isDelivering
+                        ? 'badge-express'
+                        : isAvailable
+                        ? 'badge-stock'
+                        : 'badge-low-stock'
+                    }`}
+                  >
+                    {isDelivering ? '🛵 Em Rota' : isAvailable ? '🟢 Disponível' : '⚪ Offline'}
+                  </span>
                 </div>
 
-                <span
-                  className={`badge ${
-                    isDelivering
-                      ? 'badge-express'
-                      : isAvailable
-                      ? 'badge-stock'
-                      : 'badge-low-stock'
-                  }`}
-                >
-                  {isDelivering ? '🛵 Em Rota' : isAvailable ? '🟢 Disponível' : '⚪ Offline'}
-                </span>
-              </div>
-
-              <div className="courier-vehicle-row text-xs text-muted py-2 border-top border-bottom my-3">
-                <span>Veículo & Placa:</span>
-                <strong className="text-main block">{courier.vehicle}</strong>
-              </div>
-
-              <div className="courier-metrics-row flex-between text-xs my-2">
-                <span className="flex-center gap-1 text-muted">
-                  <Star size={13} className="text-warning fill-warning" />
-                  <strong>{courier.rating || '5.0'}</strong> ({courier.deliveriesCompleted} entregas)
-                </span>
-                <span className="text-cyan font-semibold">
-                  {courier.activeOrderCount || 0} em andamento
-                </span>
-              </div>
-
-              {canEdit && (
-                <div className="courier-actions-row flex-center gap-2 justify-end pt-3 border-top mt-3">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleStatus(courier)}
-                    className="btn btn-secondary btn-xs"
-                  >
-                    {isAvailable ? 'Desativar Turno' : 'Disponibilizar'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handlePromptDelete(courier)}
-                    className="btn btn-secondary btn-xs text-danger"
-                    title="Remover da frota"
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                <div className="courier-vehicle-row text-xs text-muted py-2 border-top border-bottom my-3">
+                  <span>Veículo & Placa:</span>
+                  <strong className="text-main block">{courier.vehicle}</strong>
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+
+                <div className="courier-metrics-row flex-between text-xs my-2">
+                  <span className="flex-center gap-1 text-muted">
+                    <Star size={13} className="text-warning fill-warning" />
+                    <strong>{courier.rating || '5.0'}</strong> ({courier.deliveriesCompleted} entregas)
+                  </span>
+                  <span className="text-cyan font-semibold">
+                    {courier.activeOrderCount || 0} em andamento
+                  </span>
+                </div>
+
+                {canEdit && (
+                  <div className="courier-actions-row flex-center gap-2 justify-end pt-3 border-top mt-3">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(courier)}
+                      className="btn btn-secondary btn-xs"
+                    >
+                      {isAvailable ? 'Desativar Turno' : 'Disponibilizar'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handlePromptDelete(courier)}
+                      className="btn btn-secondary btn-xs text-danger"
+                      title="Remover da frota"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Modal Cadastrar Entregador via Portal */}
       {isModalOpen && typeof document !== 'undefined' && createPortal(
