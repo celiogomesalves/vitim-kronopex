@@ -20,6 +20,8 @@ import { PartnerApplicationModal } from './components/PartnerApplicationModal';
 import { PartnerPortal } from './components/partner/PartnerPortal';
 import { PwaInstallBanner } from './components/mobile/PwaInstallBanner';
 import { MobileBottomBar } from './components/mobile/MobileBottomBar';
+import { EmptyState } from './components/common/EmptyState';
+import { Package } from 'lucide-react';
 import './App.css';
 
 export function App() {
@@ -637,21 +639,17 @@ export function App() {
 
         {/* Products Grid */}
         {filteredProducts.length === 0 ? (
-          <div className="glass-panel text-center py-12 my-6">
-            <h3 className="font-bold text-base mb-1">Nenhuma peça encontrada</h3>
-            <p className="text-xs text-muted mb-4">
-              Tente buscar por outro modelo de veículo, código OEM ou selecione outra prateleira.
-            </p>
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setSelectedCategory('all');
-              }}
-              className="btn btn-secondary text-xs"
-            >
-              Exibir Todas as Peças
-            </button>
-          </div>
+          <EmptyState
+            icon={Package}
+            badgeText="Vitrine KronoPex"
+            title="Nenhuma Peça Encontrada"
+            description="Não encontramos nenhuma peça com os filtros ou termos pesquisados. Tente buscar por outro código OEM, modelo ou visualize todas as peças disponíveis."
+            actionText="Exibir Todas as Peças"
+            onAction={() => {
+              setSearchTerm('');
+              setSelectedCategory('all');
+            }}
+          />
         ) : (
           <div className="products-grid">
             {filteredProducts.map((product) => {
