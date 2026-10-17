@@ -9,13 +9,14 @@ import {
   ShoppingBag,
   Truck,
   Bell,
-  Sparkles
+  Sparkles,
+  FileText
 } from 'lucide-react';
 import { FcmService } from '../../services/fcm';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { SmartPagination } from '../common/SmartPagination';
 import { EmptyState } from '../common/EmptyState';
-import { formatCurrency, formatPhone, formatDateTime } from '../../utils/formatters';
+import { formatCurrency, formatPhone, formatDateTime, formatDocument } from '../../utils/formatters';
 
 const ORDERS_PER_PAGE = 8;
 
@@ -352,6 +353,12 @@ export function AdminOrders({
                     <Phone size={14} className="text-cyan" />
                     <span>{formatPhone(selectedOrder.customer.phone)}</span>
                   </div>
+                  {selectedOrder.customer.document && (
+                    <div className="flex-center gap-2 text-muted">
+                      <FileText size={14} className="text-cyan" />
+                      <span>Doc: {formatDocument(selectedOrder.customer.document)}</span>
+                    </div>
+                  )}
                   <div className="flex-center gap-2 text-muted">
                     <MapPin size={14} className="text-cyan" />
                     <span>{selectedOrder.customer.address} - {selectedOrder.customer.neighborhood}, {selectedOrder.customer.city}</span>

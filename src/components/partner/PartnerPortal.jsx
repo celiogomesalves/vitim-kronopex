@@ -17,6 +17,7 @@ import { ConfirmationModal } from '../common/ConfirmationModal';
 import { ImageUploadSelector } from '../common/ImageUploadSelector';
 import { SmartPagination } from '../common/SmartPagination';
 import { QuickCategoryModal } from '../common/QuickCategoryModal';
+import { EmptyState } from '../common/EmptyState';
 import {
   formatCurrency,
   maskCurrencyInput,
@@ -309,34 +310,37 @@ export function PartnerPortal({
             )}
           </div>
 
-          {/* Lista de Peças do Parceiro */}
-          <div className="admin-table-wrapper glass-panel">
-            <div className="p-4 border-bottom flex-between">
-              <h3 className="font-bold text-sm text-main">Meus Produtos Cadastrados</h3>
-              <span className="text-xs text-muted">{partnerProducts.length} itens encontrados</span>
-            </div>
+          {/* Lista de Peças do Parceiro ou Empty State */}
+          {partnerProducts.length === 0 ? (
+            <EmptyState
+              icon={Package}
+              badgeText="Catálogo do Distribuidor"
+              title="Nenhuma Peça Anunciada"
+              description="Seu estoque no portal está vazio no momento. Adicione suas peças para expô-las diretamente aos clientes e oficinas que compram na KronoPex com entrega expressa."
+              actionText="Anunciar Primeira Peça"
+              onAction={handleOpenAdd}
+            />
+          ) : (
+            <div className="admin-table-wrapper glass-panel">
+              <div className="p-4 border-bottom flex-between">
+                <h3 className="font-bold text-sm text-main">Meus Produtos Cadastrados</h3>
+                <span className="text-xs text-muted">{partnerProducts.length} itens encontrados</span>
+              </div>
 
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>Peça / Fabricante</th>
-                  <th>Categoria</th>
-                  <th>Preço ao Consumidor</th>
-                  <th>Seu Ganho Líquido</th>
-                  <th>Estoque</th>
-                  <th>Status na Vitrine</th>
-                  <th className="text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedPartnerProducts.length === 0 ? (
+              <table className="admin-table">
+                <thead>
                   <tr>
-                    <td colSpan={7} className="text-center py-10 text-muted text-xs">
-                      Você ainda não cadastrou nenhuma peça. Clique em "Anunciar Nova Peça" para começar!
-                    </td>
+                    <th>Peça / Fabricante</th>
+                    <th>Categoria</th>
+                    <th>Preço ao Consumidor</th>
+                    <th>Seu Ganho Líquido</th>
+                    <th>Estoque</th>
+                    <th>Status na Vitrine</th>
+                    <th className="text-right">Ações</th>
                   </tr>
-                ) : (
-                  paginatedPartnerProducts.map((p) => {
+                </thead>
+                <tbody>
+                  {paginatedPartnerProducts.map((p) => {
                     const commissionRate = (partner?.commissionRate || 12) / 100;
                     const netEarning = p.price * (1 - commissionRate);
                     const isApproved = p.approvalStatus === 'approved';
@@ -419,8 +423,7 @@ export function PartnerPortal({
                         </td>
                       </tr>
                     );
-                  })
-                )}
+                  })}
               </tbody>
             </table>
 
@@ -437,6 +440,7 @@ export function PartnerPortal({
               </div>
             )}
           </div>
+          )}
         </div>
       </main>
 

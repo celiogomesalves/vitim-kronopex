@@ -13,6 +13,7 @@ import {
   Truck
 } from 'lucide-react';
 import { INITIAL_CATEGORIES } from '../data/mockProducts';
+import { formatCNPJ, formatPhone } from '../utils/formatters';
 
 export function PartnerApplicationModal({ isOpen, onClose, onSubmitApplication }) {
   const [formData, setFormData] = useState({
@@ -144,7 +145,7 @@ export function PartnerApplicationModal({ isOpen, onClose, onSubmitApplication }
                   required
                   placeholder="00.000.000/0001-00"
                   value={formData.cnpj}
-                  onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, cnpj: formatCNPJ(e.target.value) })}
                 />
               </div>
 
@@ -177,7 +178,7 @@ export function PartnerApplicationModal({ isOpen, onClose, onSubmitApplication }
                   required
                   placeholder="(11) 98888-7777"
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
                 />
               </div>
 

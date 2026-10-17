@@ -17,12 +17,13 @@ import {
   QrCode,
   Package,
   Layers,
+  Clock,
   X
 } from 'lucide-react';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { SmartPagination } from '../common/SmartPagination';
 import { EmptyState } from '../common/EmptyState';
-import { formatCurrency, formatPhone, formatCNPJ } from '../../utils/formatters';
+import { formatCurrency, formatPhone, formatCNPJ, formatDateTime } from '../../utils/formatters';
 
 export function AdminPartners({
   partners,
@@ -297,9 +298,17 @@ export function AdminPartners({
                           <span className="text-xs text-muted font-mono">{formatCNPJ(req.cnpj)}</span>
                         </div>
                       </div>
-                      <span className="badge badge-warning flex-center gap-1 font-semibold text-xs">
-                        <AlertCircle size={11} /> Pendente
-                      </span>
+                      <div className="flex-center gap-2">
+                        {req.createdAt && (
+                          <span className="text-xs text-muted flex-center gap-1 font-mono">
+                            <Clock size={11} className="text-cyan" />
+                            <span>{formatDateTime(req.createdAt)}</span>
+                          </span>
+                        )}
+                        <span className="badge badge-warning flex-center gap-1 font-semibold text-xs">
+                          <AlertCircle size={11} /> Pendente
+                        </span>
+                      </div>
                     </div>
 
                     {/* Data Fields Grid em 2 Colunas */}

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { StorageService } from '../services/storage';
 import { MercadoPagoService } from '../services/mercadopago';
-import { formatCurrency, formatPhone, formatCEP } from '../utils/formatters';
+import { formatCurrency, formatPhone, formatCEP, formatDocument, maskCurrencyInput } from '../utils/formatters';
 
 export function CheckoutModal({
   isOpen,
@@ -33,6 +33,7 @@ export function CheckoutModal({
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
+    document: '',
     cep: '',
     address: '',
     number: '',
@@ -133,6 +134,7 @@ export function CheckoutModal({
       customer: {
         name: formData.name,
         phone: formData.phone,
+        document: formData.document,
         cep: formData.cep,
         address: `${formData.address}, ${formData.number}`,
         neighborhood: formData.neighborhood,
@@ -243,6 +245,21 @@ export function CheckoutModal({
                       }
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="form-field mt-3">
+                <label>CPF ou CNPJ (Opcional - para Nota Fiscal & Garantia)</label>
+                <div className="input-with-icon">
+                  <FileText size={15} className="field-icon" />
+                  <input
+                    type="text"
+                    placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                    value={formData.document}
+                    onChange={(e) =>
+                      setFormData({ ...formData, document: formatDocument(e.target.value) })
+                    }
+                  />
                 </div>
               </div>
             </div>
@@ -380,14 +397,19 @@ export function CheckoutModal({
               {currentPayment?.requiresChange && (
                 <div className="form-field mt-3 animate-slide-down">
                   <label>Precisa de troco para quanto?</label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Troco para R$ 100,00"
-                    value={formData.cashChangeFor}
-                    onChange={(e) =>
-                      setFormData({ ...formData, cashChangeFor: e.target.value })
-                    }
-                  />
+                  <div className="input-currency-group">
+                    <span className="currency-prefix">R$</span>
+                    <input
+                      type="text"
+                      placeholder="0,00"
+                      value={formData.cashChangeFor}
+                      onChange={(e) => {
+                        const masked = maskCurrencyInput(e.target.value);
+                        setFormData({ ...formData, cashChangeFor: masked });
+                      }}
+                      className="input-currency"
+                    />
+                  </div>
                 </div>
               )}
             </div>

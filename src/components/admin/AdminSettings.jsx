@@ -17,6 +17,7 @@ import {
   Zap
 } from 'lucide-react';
 import { FcmService } from '../../services/fcm';
+import { formatCurrency, formatPhone } from '../../utils/formatters';
 
 export function AdminSettings({ config, onSaveConfig }) {
   const [formData, setFormData] = useState({ ...config });
@@ -249,25 +250,33 @@ export function AdminSettings({ config, onSaveConfig }) {
             <label>WhatsApp Comercial KronoPex (Com DDD para envio de comprovantes)</label>
             <input
               type="text"
-              placeholder="5511999998888"
+              placeholder="(11) 99999-9999"
               value={formData.whatsapp || ''}
-              onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, whatsapp: formatPhone(e.target.value) })}
             />
           </div>
 
           <div className="input-row">
             <div className="form-field flex-1">
-              <label>Meta para Frete Grátis (R$)</label>
+              <label className="flex-between">
+                <span>Meta para Frete Grátis</span>
+                <span className="text-cyan font-bold text-xs">{formatCurrency(formData.freeDeliveryThreshold ?? 200)}</span>
+              </label>
               <input
                 type="number"
+                step="0.5"
                 value={formData.freeDeliveryThreshold ?? 200}
                 onChange={(e) => setFormData({ ...formData, freeDeliveryThreshold: parseFloat(e.target.value) || 0 })}
               />
             </div>
             <div className="form-field flex-1">
-              <label>Taxa Padrão de Entrega (R$)</label>
+              <label className="flex-between">
+                <span>Taxa Padrão de Entrega</span>
+                <span className="text-cyan font-bold text-xs">{formatCurrency(formData.defaultDeliveryFee ?? 15)}</span>
+              </label>
               <input
                 type="number"
+                step="0.5"
                 value={formData.defaultDeliveryFee ?? 15}
                 onChange={(e) => setFormData({ ...formData, defaultDeliveryFee: parseFloat(e.target.value) || 0 })}
               />

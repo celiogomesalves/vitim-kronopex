@@ -12,7 +12,7 @@ import {
   Clock,
   ShieldCheck
 } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatPhone, formatDocument } from '../utils/formatters';
 import { MercadoPagoService } from '../services/mercadopago';
 
 export function OrderSuccessModal({ order, onClose, config }) {
@@ -75,20 +75,21 @@ export function OrderSuccessModal({ order, onClose, config }) {
 
   const getWhatsAppMessage = () => {
     const itemsList = order.items
-      .map((i) => `▪ ${i.quantity}x ${i.name} (R$ ${(i.price * i.quantity).toFixed(2)})`)
+      .map((i) => `▪ ${i.quantity}x ${i.name} (${formatCurrency(i.price * i.quantity)})`)
       .join('\n');
 
     return encodeURIComponent(
       ` Olá KronoPex! Acabei de realizar um pedido na Vitrine Online:\n\n` +
       `*Número do Pedido:* #${order.id}\n` +
       `*Cliente:* ${order.customer.name}\n` +
-      `*Telefone:* ${order.customer.phone}\n` +
+      `*WhatsApp:* ${formatPhone(order.customer.phone)}\n` +
+      (order.customer.document ? `*CPF/CNPJ:* ${formatDocument(order.customer.document)}\n` : '') +
       `*Endereço:* ${order.customer.address} - ${order.customer.neighborhood}, ${order.customer.city}\n` +
       (order.customer.reference ? `*Ponto de Ref:* ${order.customer.reference}\n` : '') +
       `\n*Peças Solicitadas:*\n${itemsList}\n\n` +
-      `*Forma de Pagamento:* ${order.paymentMethod.toUpperCase()}\n` +
+      `*Forma de Pagamento:* ${order.paymentMethodName || order.paymentMethod.toUpperCase()}\n` +
       `*Status do Pagamento:* ${paymentStatus === 'approved' ? 'PAGO / CONFIRMADO' : 'AGUARDANDO'}\n` +
-      `*Total a Pagar:* R$ ${order.total.toFixed(2)}\n\n` +
+      `*Total a Pagar:* ${formatCurrency(order.total)}\n\n` +
       `Por favor, confirmem o envio express!`
     );
   };
