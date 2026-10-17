@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Users,
@@ -14,11 +14,18 @@ import {
   ShoppingBag,
   Truck,
   Settings,
-  X
+  X,
+  UserCheck,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  UserX
 } from 'lucide-react';
-import { ROLE_DEFINITIONS } from '../../data/mockUsers';
+import { ROLE_DEFINITIONS, isSuperAdminEmail, MASTER_ADMIN_EMAILS } from '../../data/mockUsers';
 import { ConfirmationModal } from '../common/ConfirmationModal';
 import { formatPhone, formatCNPJ } from '../../utils/formatters';
+import { StorageService } from '../../services/storage';
 
 const PERMISSION_OPTIONS = [
   { id: 'manage_products', label: 'Gerenciar Catálogo & Estoque', icon: Package, desc: 'Criar, alterar preços e quantidade de peças' },
@@ -37,6 +44,7 @@ export function AdminUsers({
   currentAdmin
 }) {
   const [activeTab, setActiveTab] = useState('staff'); // 'staff' | 'partners'
+  const [accessRequests, setAccessRequests] = useState(() => StorageService.getAccessRequests());
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [staffForm, setStaffForm] = useState({
@@ -44,7 +52,8 @@ export function AdminUsers({
     email: '',
     phone: '',
     role: 'operator',
-    permissions: ['manage_orders']
+    permissions: ['manage_orders'],
+    fromRequestId: null
   });
 
   // Modal de edição de permissões do fornecedor
@@ -68,9 +77,17 @@ export function AdminUsers({
     variant: 'danger'
   });
 
-  const isMasterAdmin = currentAdmin?.role === 'admin';
+  useEffect(() => {
+    const handleRequestsUpdate = () => {
+      setAccessRequests(StorageService.getAccessRequests());
+    };
+    window.addEventListener('kronopex_access_requests_updated', handleRequestsUpdate);
+    return () => window.removeEventListener('kronopex_access_requests_updated', handleRequestsUpdate);
+  }, []);
 
-  // --- Handlers de Equipe (Staff) ---
+  const isMasterAdmin = currentAdmin?.role === 'admin' || isSuperAdminEmail(currentAdmin?.email);
+
+  // --- Handlers de Equipe (Staff) & Solicitações de Acesso ---
   const handleOpenAddStaff = () => {
     setEditingStaff(null);
     setStaffForm({
@@ -78,9 +95,39 @@ export function AdminUsers({
       email: '',
       phone: '',
       role: 'operator',
-      permissions: ['manage_orders']
+      permissions: ['manage_orders'],
+      fromRequestId: null
     });
     setIsStaffModalOpen(true);
+  };
+
+  const handleApproveRequest = (req) => {
+    setEditingStaff(null);
+    setStaffForm({
+      name: req.name,
+      email: req.email,
+      phone: '',
+      role: 'operator',
+      permissions: ['manage_orders'],
+      fromRequestId: req.id
+    });
+    setIsStaffModalOpen(true);
+  };
+
+  const handleRejectRequest = (reqId) => {
+    const updated = accessRequests.filter((r) => r.id !== reqId);
+    StorageService.saveAccessRequests(updated);
+    setAccessRequests(updated);
+  };
+
+  const handleToggleStaffStatus = (user) => {
+    if (isSuperAdminEmail(user.email)) {
+      alert('Administradores Master permanentes (Célio Gomes e Victor Hugo) não podem ser desativados.');
+      return;
+    }
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    const updated = staff.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u));
+    onSaveStaff(updated);
   };
 
   const handleOpenEditStaff = (user) => {
@@ -90,7 +137,8 @@ export function AdminUsers({
       email: user.email,
       phone: user.phone || '',
       role: user.role || 'operator',
-      permissions: user.permissions || (user.role === 'admin' ? PERMISSION_OPTIONS.map((p) => p.id) : ['manage_orders'])
+      permissions: user.permissions || (user.role === 'admin' ? PERMISSION_OPTIONS.map((p) => p.id) : ['manage_orders']),
+      fromRequestId: null
     });
     setIsStaffModalOpen(true);
   };
@@ -122,28 +170,36 @@ export function AdminUsers({
       const newUser = {
         id: `user-${Date.now().toString().slice(-4)}`,
         name: staffForm.name.trim(),
-        email: staffForm.email.trim(),
+        email: staffForm.email.trim().toLowerCase(),
         phone: staffForm.phone.trim(),
         role: staffForm.role,
         roleName: ROLE_DEFINITIONS[staffForm.role]?.label || 'Operador',
         status: 'active',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80',
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(staffForm.name)}&background=00d2ff&color=050d1a&bold=true`,
         permissions: staffForm.role === 'admin' ? PERMISSION_OPTIONS.map((p) => p.id) : staffForm.permissions
       };
       onSaveStaff([...staff, newUser]);
+
+      // Se foi aprovado a partir de uma solicitação pendente do Google, remove dos pendentes
+      if (staffForm.fromRequestId) {
+        const remaining = accessRequests.filter((r) => r.id !== staffForm.fromRequestId);
+        StorageService.saveAccessRequests(remaining);
+        setAccessRequests(remaining);
+      }
+
       setIsStaffModalOpen(false);
     }
   };
 
   const handlePromptDeleteStaff = (user) => {
-    if (staff.length <= 1) {
-      alert('Não é possível remover o único administrador do sistema.');
+    if (isSuperAdminEmail(user.email)) {
+      alert('Administradores Master permanentes (Célio Gomes e Victor Hugo) não podem ser removidos.');
       return;
     }
     setConfirmModal({
       isOpen: true,
       title: 'Revogar Acesso do Colaborador',
-      message: `Tem certeza que deseja revogar o acesso de "${user.name}" (${user.email})?`,
+      message: `Tem certeza que deseja revogar o acesso de "${user.name}" (${user.email})? Esta conta será impedida de entrar no painel.`,
       actionType: 'delete_staff',
       payload: user.id,
       variant: 'danger'
@@ -238,6 +294,46 @@ export function AdminUsers({
         )}
       </div>
 
+      {/* Banner Informativo de Política de Acesso */}
+      <div
+        className="glass-panel mb-6"
+        style={{
+          padding: '1.25rem 1.5rem',
+          borderRadius: '18px',
+          border: '1px solid rgba(0, 245, 160, 0.25)',
+          background: 'linear-gradient(135deg, rgba(0, 245, 160, 0.06) 0%, rgba(0, 210, 255, 0.04) 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)'
+        }}
+      >
+        <div
+          style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '50%',
+            background: 'rgba(0, 245, 160, 0.15)',
+            border: '1px solid rgba(0, 245, 160, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--accent-primary)',
+            flexShrink: 0
+          }}
+        >
+          <Shield size={22} />
+        </div>
+        <div style={{ flex: 1 }}>
+          <strong style={{ display: 'block', fontSize: '0.88rem', color: '#ffffff', marginBottom: '2px' }}>
+            Política de Acesso Master KronoPex
+          </strong>
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            Acesso irrestrito automático ativo para <strong style={{ color: 'var(--accent-primary)' }}>celiogomesalves@gmail.com</strong> e <strong style={{ color: 'var(--accent-cyan)' }}>victorhugotortuga33@gmail.com</strong>. Todas as outras contas Google requerem pré-autorização manual dos Administradores Master abaixo.
+          </span>
+        </div>
+      </div>
+
       {/* Tabs de Seleção */}
       <div className="orders-filter-tabs glass-panel mb-6 flex-center gap-2">
         <button
@@ -264,6 +360,86 @@ export function AdminUsers({
       {/* ABA 1: Equipe Interna */}
       {activeTab === 'staff' && (
         <>
+          {/* Seção de Solicitações Pendentes de Acesso */}
+          {accessRequests.length > 0 && (
+            <div
+              className="glass-panel mb-6"
+              style={{
+                padding: '1.5rem',
+                borderRadius: '20px',
+                border: '1px solid rgba(251, 191, 36, 0.35)',
+                background: 'linear-gradient(150deg, rgba(30, 24, 10, 0.75) 0%, rgba(18, 14, 6, 0.88) 100%)',
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.45)'
+              }}
+            >
+              <div className="flex-between mb-4">
+                <div className="flex-center gap-2">
+                  <Clock size={18} style={{ color: '#fbbf24' }} />
+                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>
+                    Solicitações de Acesso Pendentes ({accessRequests.length})
+                  </h4>
+                </div>
+                <span className="badge badge-warning text-xs">
+                  Tentativas via Google aguardando autorização
+                </span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+                {accessRequests.map((req) => (
+                  <div
+                    key={req.id}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.04)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      borderRadius: '14px',
+                      padding: '1rem 1.15rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '1rem'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <img
+                        src={req.avatar}
+                        alt={req.name}
+                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                      <div>
+                        <strong style={{ display: 'block', fontSize: '0.84rem', color: '#ffffff' }}>
+                          {req.name}
+                        </strong>
+                        <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                          {req.email}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleApproveRequest(req)}
+                        className="btn btn-primary btn-xs flex-center gap-1"
+                        title="Autorizar e definir permissões"
+                      >
+                        <UserCheck size={13} />
+                        <span>Autorizar</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRejectRequest(req.id)}
+                        className="btn btn-secondary btn-xs text-danger flex-center"
+                        title="Recusar solicitação"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Guia Visual de Cargos */}
           <div className="role-permissions-guide-grid mb-6">
             {Object.entries(ROLE_DEFINITIONS).map(([roleKey, roleMeta]) => (
@@ -290,13 +466,14 @@ export function AdminUsers({
                   <th>Contato</th>
                   <th>Cargo / Função</th>
                   <th>Permissões Ativas</th>
-                  <th>Status</th>
+                  <th>Status de Acesso</th>
                   {isMasterAdmin && <th className="text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody>
                 {staff.map((user) => {
                   const userPerms = user.permissions || [];
+                  const isSuper = isSuperAdminEmail(user.email);
                   return (
                     <tr key={user.id}>
                       <td>
@@ -340,28 +517,48 @@ export function AdminUsers({
                         </div>
                       </td>
                       <td>
-                        <span className="badge badge-stock">Ativo</span>
+                        {isSuper ? (
+                          <span className="badge badge-express" title="Super Administrador Vitalício">
+                            Super Admin (Vitalício)
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleStaffStatus(user)}
+                            className={`badge ${user.status === 'active' ? 'badge-stock' : 'badge-low-stock'}`}
+                            style={{ cursor: 'pointer', border: 'none', transition: 'var(--transition)' }}
+                            title="Clique para alternar status (Ativo / Inativo)"
+                          >
+                            {user.status === 'active' ? '● Ativo' : '○ Inativo / Bloqueado'}
+                          </button>
+                        )}
                       </td>
                       {isMasterAdmin && (
                         <td className="text-right">
                           <div className="flex-center gap-2 justify-end">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditStaff(user)}
-                              className="table-action-btn"
-                              title="Editar permissões"
-                            >
-                              <Edit2 size={15} />
-                            </button>
-                            {user.id !== currentAdmin?.id && (
-                              <button
-                                type="button"
-                                onClick={() => handlePromptDeleteStaff(user)}
-                                className="table-action-btn text-danger"
-                                title="Revogar acesso"
-                              >
-                                <Trash2 size={15} />
-                              </button>
+                            {isSuper ? (
+                              <span className="text-xs text-muted italic" style={{ padding: '0.25rem 0.5rem' }}>
+                                Acesso Vitalício
+                              </span>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditStaff(user)}
+                                  className="table-action-btn"
+                                  title="Editar permissões"
+                                >
+                                  <Edit2 size={15} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handlePromptDeleteStaff(user)}
+                                  className="table-action-btn text-danger"
+                                  title="Revogar acesso"
+                                >
+                                  <Trash2 size={15} />
+                                </button>
+                              </>
                             )}
                           </div>
                         </td>

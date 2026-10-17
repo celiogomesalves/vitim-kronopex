@@ -1,7 +1,7 @@
 import { INITIAL_PRODUCTS, INITIAL_CATEGORIES } from '../data/mockProducts';
 import { INITIAL_COURIERS } from '../data/mockCouriers';
 import { INITIAL_ORDERS } from '../data/mockOrders';
-import { INITIAL_STAFF } from '../data/mockUsers';
+import { INITIAL_STAFF, MASTER_ADMINS } from '../data/mockUsers';
 import { INITIAL_PARTNERS, INITIAL_PARTNER_REQUESTS } from '../data/mockPartners';
 import { INITIAL_PAYMENT_METHODS } from '../data/mockPaymentMethods';
 import { AppwriteService } from './appwrite';
@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   COURIERS: 'kronopex_couriers',
   ORDERS: 'kronopex_orders',
   STAFF: 'kronopex_staff',
+  ACCESS_REQUESTS: 'kronopex_access_requests',
   PARTNERS: 'kronopex_partners',
   PARTNER_REQUESTS: 'kronopex_partner_requests',
   CART: 'kronopex_cart',
@@ -190,7 +191,28 @@ export const StorageService = {
   getStaff: () => {
     try {
       const data = localStorage.getItem(STORAGE_KEYS.STAFF);
-      return data ? JSON.parse(data) : INITIAL_STAFF;
+      let list = data ? JSON.parse(data) : [];
+      if (!Array.isArray(list)) list = [];
+
+      // Garante que os dois Administradores Master sempre existam, estejam ativos e com papel 'admin'
+      MASTER_ADMINS.forEach((master) => {
+        const idx = list.findIndex(
+          (s) => s.email && s.email.toLowerCase() === master.email.toLowerCase()
+        );
+        if (idx >= 0) {
+          list[idx] = {
+            ...list[idx],
+            ...master,
+            status: 'active',
+            role: 'admin',
+            roleName: 'Administrador Master',
+            isSuperAdmin: true
+          };
+        } else {
+          list.unshift(master);
+        }
+      });
+      return list;
     } catch {
       return INITIAL_STAFF;
     }
@@ -202,6 +224,46 @@ export const StorageService = {
     staff.forEach((s) => {
       AppwriteService.saveDocument('staff', s.id, s).catch(() => {});
     });
+  },
+
+  getAccessRequests: () => {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.ACCESS_REQUESTS);
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  saveAccessRequests: (requests) => {
+    localStorage.setItem(STORAGE_KEYS.ACCESS_REQUESTS, JSON.stringify(requests));
+    window.dispatchEvent(new Event('kronopex_access_requests_updated'));
+    requests.forEach((r) => {
+      AppwriteService.saveDocument('access_requests', r.id, r).catch(() => {});
+    });
+  },
+
+  recordAccessRequest: (userObj) => {
+    const list = StorageService.getAccessRequests();
+    const cleanEmail = (userObj.email || '').toLowerCase().trim();
+    const existing = list.find((r) => r.email && r.email.toLowerCase() === cleanEmail);
+    if (existing) {
+      existing.lastAttempt = new Date().toISOString();
+      StorageService.saveAccessRequests(list);
+      return existing;
+    }
+    const newReq = {
+      id: userObj.id || `req-${Date.now().toString().slice(-4)}`,
+      name: userObj.name || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      avatar: userObj.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userObj.name || cleanEmail)}&background=00d2ff&color=050d1a&bold=true`,
+      status: 'pending',
+      requestedAt: new Date().toISOString(),
+      lastAttempt: new Date().toISOString()
+    };
+    const updated = [newReq, ...list];
+    StorageService.saveAccessRequests(updated);
+    return newReq;
   },
 
   getCurrentUser: () => {

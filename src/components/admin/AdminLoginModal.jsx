@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { AppwriteService } from '../../services/appwrite';
 import { StorageService } from '../../services/storage';
+import { isSuperAdminEmail } from '../../data/mockUsers';
 
 export function AdminLoginModal({
   isOpen,
@@ -40,35 +41,42 @@ export function AdminLoginModal({
     setIsLoading(true);
 
     try {
+      const cleanEmail = email.trim().toLowerCase();
+      const staffList = StorageService.getStaff();
+      const localStaff = staffList.find(
+        (u) => u.email && u.email.toLowerCase() === cleanEmail
+      );
+
+      // Verificação de Autorização Restrita
+      const isSuper = isSuperAdminEmail(cleanEmail);
+      if (!isSuper && (!localStaff || localStaff.status !== 'active')) {
+        throw new Error(
+          'Acesso não autorizado. Apenas os Administradores Master (Célio Gomes e Victor Hugo) ou colaboradores previamente autorizados por eles podem acessar o painel.'
+        );
+      }
+
       // 1. Tenta autenticar diretamente no Appwrite
       let appwriteUser = null;
       try {
-        const authResult = await AppwriteService.loginWithEmail(email, password);
+        const authResult = await AppwriteService.loginWithEmail(cleanEmail, password);
         appwriteUser = authResult.user;
       } catch (authErr) {
         console.warn('Falha no login Appwrite direto:', authErr.message || authErr);
       }
 
-      // 2. Localiza se o colaborador existe na lista de staff da KronoPex
-      const staffList = StorageService.getStaff();
-      const localStaff = staffList.find(
-        (u) => u.email.toLowerCase() === email.trim().toLowerCase()
-      );
-
-      if (!localStaff && !appwriteUser) {
-        throw new Error('E-mail ou senha inválidos. Verifique suas credenciais corporativas.');
-      }
-
-      // 3. Monta o perfil de sessão do administrador
+      // 2. Monta o perfil de sessão do administrador
       const activeAdmin = localStaff || {
         id: appwriteUser?.$id || `admin-${Date.now().toString().slice(-4)}`,
-        name: appwriteUser?.name || email.split('@')[0],
-        email: email.trim().toLowerCase(),
-        role: staffList.length === 0 ? 'admin' : 'manager',
-        roleName: staffList.length === 0 ? 'Administrador Master' : 'Gerente Comercial',
+        name: isSuper
+          ? (cleanEmail.includes('celio') ? 'Célio Gomes Alves' : 'Victor Hugo')
+          : (appwriteUser?.name || cleanEmail.split('@')[0]),
+        email: cleanEmail,
+        role: isSuper ? 'admin' : (localStaff?.role || 'manager'),
+        roleName: isSuper ? 'Administrador Master' : (localStaff?.roleName || 'Gerente Comercial'),
         status: 'active',
-        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(appwriteUser?.name || email)}&background=00d2ff&color=050d1a&bold=true`,
-        permissions: ['all']
+        isSuperAdmin: isSuper,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(cleanEmail)}&background=00f5a0&color=050d1a&bold=true`,
+        permissions: isSuper ? ['all'] : (localStaff?.permissions || ['manage_orders'])
       };
 
       StorageService.setCurrentUser(activeAdmin);

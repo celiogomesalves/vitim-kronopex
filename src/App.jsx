@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { StorageService } from './services/storage';
 import { AppwriteService } from './services/appwrite';
 import { FcmService } from './services/fcm';
+import { isSuperAdminEmail } from './data/mockUsers';
 import { Navbar } from './components/Navbar';
 import { HeroShowcase } from './components/HeroShowcase';
 import { CategoryFilter } from './components/CategoryFilter';
@@ -13,6 +14,7 @@ import { OrderSuccessModal } from './components/OrderSuccessModal';
 import { Footer } from './components/Footer';
 import { AdminLayout } from './components/admin/AdminLayout';
 import { AdminLoginModal } from './components/admin/AdminLoginModal';
+import { UnauthorizedAccessModal } from './components/admin/UnauthorizedAccessModal';
 import { InitialAdminSetup } from './components/admin/InitialAdminSetup';
 import { PartnerApplicationModal } from './components/PartnerApplicationModal';
 import { PartnerPortal } from './components/partner/PartnerPortal';
@@ -36,6 +38,7 @@ export function App() {
   const [currentUser, setCurrentUser] = useState(() => StorageService.getCurrentUser());
   const [viewMode, setViewMode] = useState('store'); // 'store' | 'admin'
   const [recoveryParams, setRecoveryParams] = useState(null);
+  const [unauthorizedUser, setUnauthorizedUser] = useState(null);
 
   // Storefront UI state
   const [searchTerm, setSearchTerm] = useState('');
@@ -154,27 +157,89 @@ export function App() {
       setIsAdminLoginOpen(true);
     }
 
-    // Checagem de retorno do Google OAuth para Setup Inicial do Administrador Master
-    AppwriteService.getCurrentUser().then((authUser) => {
-      if (authUser && localStorage.getItem('kronopex_pending_master_setup') === 'true') {
-        localStorage.removeItem('kronopex_pending_master_setup');
-        const masterAdmin = {
+    // Checagem de retorno do Google OAuth e validação estrita de permissões administrativas
+    AppwriteService.getCurrentUser().then(async (authUser) => {
+      if (!authUser || !authUser.email) return;
+
+      const userEmail = authUser.email.toLowerCase().trim();
+      const currentStaff = StorageService.getStaff();
+
+      // Caso 1: Administrador Master Vitalício (celiogomesalves@gmail.com ou victorhugotortuga33@gmail.com)
+      if (isSuperAdminEmail(userEmail)) {
+        const masterAdmin = currentStaff.find((s) => s.email && s.email.toLowerCase() === userEmail) || {
           id: authUser.$id,
-          name: authUser.name || authUser.email.split('@')[0],
-          email: authUser.email.toLowerCase(),
+          name: authUser.name || (userEmail.includes('celio') ? 'Célio Gomes Alves' : 'Victor Hugo'),
+          email: userEmail,
           role: 'admin',
           roleName: 'Administrador Master',
           status: 'active',
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.name || authUser.email)}&background=00d2ff&color=050d1a&bold=true`,
+          isSuperAdmin: true,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.name || userEmail)}&background=00f5a0&color=050d1a&bold=true`,
           permissions: ['all'],
           createdAt: new Date().toISOString()
         };
-        StorageService.saveStaff([masterAdmin]);
         StorageService.setCurrentUser(masterAdmin);
-        setStaff([masterAdmin]);
         setCurrentUser(masterAdmin);
         setViewMode('admin');
+        return;
       }
+
+      // Caso 2: Colaborador previamente autorizado e ativo na lista de staff
+      const authorizedStaff = currentStaff.find(
+        (s) => s.email && s.email.toLowerCase() === userEmail && s.status === 'active'
+      );
+      if (authorizedStaff) {
+        const staffSession = {
+          ...authorizedStaff,
+          id: authUser.$id || authorizedStaff.id,
+          name: authUser.name || authorizedStaff.name,
+          avatar: authUser.name
+            ? `https://ui-avatars.com/api/?name=${encodeURIComponent(authUser.name)}&background=00d2ff&color=050d1a&bold=true`
+            : authorizedStaff.avatar
+        };
+        StorageService.setCurrentUser(staffSession);
+        setCurrentUser(staffSession);
+        setViewMode('admin');
+        return;
+      }
+
+      // Caso 3: Parceiro / Fornecedor homologado e ativo
+      const currentPartners = StorageService.getPartners();
+      const authorizedPartner = currentPartners.find(
+        (p) => p.email && p.email.toLowerCase() === userEmail && p.status === 'active'
+      );
+      if (authorizedPartner) {
+        const partnerSession = {
+          ...authorizedPartner,
+          role: 'partner'
+        };
+        StorageService.setCurrentUser(partnerSession);
+        setCurrentUser(partnerSession);
+        setViewMode('admin');
+        return;
+      }
+
+      // Caso 4: USUÁRIO NÃO AUTORIZADO!
+      // Registra a tentativa para que os administradores possam ver no painel e autorizar
+      StorageService.recordAccessRequest({
+        id: authUser.$id,
+        name: authUser.name || userEmail.split('@')[0],
+        email: userEmail
+      });
+
+      // Desloga do Appwrite e limpa sessão
+      try {
+        await AppwriteService.logout();
+      } catch {}
+      StorageService.setCurrentUser(null);
+      setCurrentUser(null);
+      setViewMode('store');
+
+      // Exibe modal explicativo de acesso bloqueado
+      setUnauthorizedUser({
+        name: authUser.name || userEmail.split('@')[0],
+        email: userEmail
+      });
     }).catch(() => {});
 
     // Sincronização automática em tempo real com Appwrite Cloud / Self-hosted
@@ -446,8 +511,9 @@ export function App() {
     }
   };
 
-  // Regra de Bloqueio do Sistema: Se não houver administrador cadastrado, a vitrine fica indisponível para usuários comuns
-  if (staff.length === 0) {
+  // Modo Setup opcional via parâmetro de URL (?mode=setup)
+  const isExplicitSetupMode = new URLSearchParams(window.location.search).get('mode') === 'setup';
+  if (isExplicitSetupMode && staff.length === 0) {
     return (
       <InitialAdminSetup
         onSetupComplete={(masterAdmin) => {
@@ -656,6 +722,14 @@ export function App() {
         onLoginSuccess={handleLoginSuccess}
         recoveryParams={recoveryParams}
       />
+
+      {/* Modal de Acesso Não Autorizado ao Painel */}
+      {unauthorizedUser && (
+        <UnauthorizedAccessModal
+          unauthorizedUser={unauthorizedUser}
+          onClose={() => setUnauthorizedUser(null)}
+        />
+      )}
 
       {/* Partner Application Modal (Marketplace Onboarding) */}
       <PartnerApplicationModal
